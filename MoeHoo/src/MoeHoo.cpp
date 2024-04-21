@@ -34,9 +34,9 @@ int main()
 	try
 	{
 		// 读取PE文件到内存
-		//std::vector<char> PEData = ;
+		std::vector<char> PEData(ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node"));
 		std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-		size_t patternPos = SearchHexPattern(ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node"), hexPattern);
+		size_t patternPos = SearchHexPattern(PEData, hexPattern);
 
 		std::cout << "十六进制序列的文件偏移位置: " << std::hex << patternPos << std::endl;
 
