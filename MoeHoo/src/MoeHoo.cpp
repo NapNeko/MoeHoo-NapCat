@@ -4,7 +4,7 @@
 #include <string>
 #include "MoeHoo.h"
 #include <node_api.h>
-//"${CMAKE_SOURCE_DIR}/node_modules/node-api-header/include"
+//${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
 namespace demo {
 
 napi_value Method(napi_env env, napi_callback_info args) {
