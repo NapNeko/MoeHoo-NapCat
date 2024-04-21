@@ -4,14 +4,22 @@ cmake_policy(SET CMP0042 NEW)
 
 project (MoeHoo)
 
-add_definitions(-DNAPI_VERSION=4)
+# define NPI_VERSION
+add_definitions(-DNAPI_VERSION=7)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_JS_INC})
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/MoeHoo/include/")
 
 file(GLOB SOURCE_FILES "./MoeHoo/src/*.cpp")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
 
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)

@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-
+#include <string>
+#include "MoeHoo.h"
 std::vector<char> ReadFileToMemory(const std::string& filePath) {
 	std::ifstream file(filePath, std::ios::binary | std::ios::ate);
 	if (!file) {
@@ -26,11 +27,9 @@ size_t SearchHexPattern(const std::vector<char>& data, const std::string& hexPat
 int main() {
 	try {
 		// 读取PE文件到内存
-		std::vector<char> fileData = ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node");
-
+		std::vector<char> PEData = ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node");
 		std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-
-		size_t patternPos = SearchHexPattern(fileData, hexPattern);
+		size_t patternPos = SearchHexPattern(PEData, hexPattern);
 
 		std::cout << "十六进制序列的文件偏移位置: " << std::hex << patternPos << std::endl;
 

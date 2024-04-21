@@ -1,0 +1,13 @@
+{
+  "name": "moehoo",
+  "version": "0.0.0",
+  "scripts": {
+    "install": "cmake-js compile"
+  },
+  "binary": {
+    "napi_versions": [7]
+  },
+  "dependencies": {
+    "cmake-js": "^7.3.0"
+  }
+}
