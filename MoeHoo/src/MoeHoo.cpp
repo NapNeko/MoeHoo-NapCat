@@ -3,9 +3,12 @@
 #include <vector>
 #include <string>
 #include "MoeHoo.h"
-std::vector<char> ReadFileToMemory(const std::string& filePath) {
+
+std::vector<char> ReadFileToMemory(const std::string &filePath)
+{
 	std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-	if (!file) {
+	if (!file)
+	{
 		throw std::runtime_error("无法打开文件");
 	}
 	size_t fileSize = file.tellg();
@@ -15,21 +18,25 @@ std::vector<char> ReadFileToMemory(const std::string& filePath) {
 	return buffer;
 }
 
-size_t SearchHexPattern(const std::vector<char>& data, const std::string& hexPattern) {
+size_t SearchHexPattern(const std::vector<char> &data, const std::string &hexPattern)
+{
 	std::string dataStr(data.begin(), data.end());
 	size_t pos = dataStr.find(hexPattern);
-	if (pos == std::string::npos) {
+	if (pos == std::string::npos)
+	{
 		throw std::runtime_error("未找到指定的十六进制序列");
 	}
 	return pos;
 }
 
-int main() {
-	try {
+int main()
+{
+	try
+	{
 		// 读取PE文件到内存
-		std::vector<char> PEData = ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node");
+		//std::vector<char> PEData = ;
 		std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-		size_t patternPos = SearchHexPattern(PEData, hexPattern);
+		size_t patternPos = SearchHexPattern(ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node"), hexPattern);
 
 		std::cout << "十六进制序列的文件偏移位置: " << std::hex << patternPos << std::endl;
 
@@ -42,10 +49,10 @@ int main() {
 		std::cout << "十六进制序列的RVA: " << std::hex << rva << std::endl;
 		std::cout << "十六进制序列的Hook点:" << std::hex << rva - 0x3 << std::endl;
 	}
-	catch (const std::exception& e) {
+	catch (const std::exception &e)
+	{
 		std::cerr << "错误: " << e.what() << std::endl;
 	}
 	system("pause");
 	return 0;
 }
-

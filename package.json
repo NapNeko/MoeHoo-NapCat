@@ -2,7 +2,8 @@
   "name": "moehoo",
   "version": "0.0.0",
   "scripts": {
-    "install": "cmake-js compile"
+    "install": "cmake-js compile",
+    "rebuild": "cmake-js rebuild"
   },
   "binary": {
     "napi_versions": [7]
