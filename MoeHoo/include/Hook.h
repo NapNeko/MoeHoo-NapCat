@@ -1,1 +1,6 @@
 #include <string>
+
+class InlineHook
+{
+    
+};
