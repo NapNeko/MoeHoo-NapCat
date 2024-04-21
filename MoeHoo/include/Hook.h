@@ -5,6 +5,12 @@ class InlineHook
 
 };
 /*
+class IatHook{
+
+};
+*/
+
+/*
 jmp xxxxx
 原理有问题 jmp后应该保证自动jmp回来 待实现 在hook阶段unhook 对于多线程比较灾难 可以参考Frida的HOOK 此处仅HOOK WIN32 X64实现
 
