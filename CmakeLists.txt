@@ -7,7 +7,7 @@ project (MoeHoo)
 # define NPI_VERSION
 add_definitions(-DNAPI_VERSION=7)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_JS_INC})
