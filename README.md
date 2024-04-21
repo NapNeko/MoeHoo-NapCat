@@ -1,0 +1,2 @@
+# MoeHoo-NapCat
+Auto Hook
