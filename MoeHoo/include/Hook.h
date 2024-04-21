@@ -6,7 +6,9 @@ class InlineHook
 };
 /*
 jmp xxxxx
-原理有问题 jmp后应该保证自动jmp回来 待实现 在hook阶段unhook 对于多线程比较灾难 可以参考Frida的HOOK
+原理有问题 jmp后应该保证自动jmp回来 待实现 在hook阶段unhook 对于多线程比较灾难 可以参考Frida的HOOK 此处仅HOOK WIN32 X64实现
+
+至少目标达到 Linux X64/Linux Arm64 Arm64指令集和ELF格式我不太熟悉
 void Hook()
 {
 	DWORD OldProtect;
