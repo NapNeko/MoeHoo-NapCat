@@ -15,7 +15,7 @@ DWORD_PTR searchRkeyDownloadHook()
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
 	if (wrapperModule == NULL)
 		return 0;
-	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
+	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB";
 	DWORD_PTR address = SearchInModule(wrapperModule, hexPattern);
 	return address;
 }
@@ -27,13 +27,12 @@ namespace demo
 	{
 		napi_value greeting;
 		napi_status status;
-		MessageBoxA(0, std::to_string(searchRkeyDownloadHook()).c_str(), "", 0);
-		status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
+		//searchRkeyDownloadHook() CALL点处
+		status = napi_create_string_utf8(env, std::to_string(searchRkeyDownloadHook()).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
 		return greeting;
 	}
-
 	napi_value init(napi_env env, napi_value exports)
 	{
 		napi_status status;
