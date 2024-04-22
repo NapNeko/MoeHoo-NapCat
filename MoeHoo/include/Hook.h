@@ -1,8 +1,5 @@
 #include <string>
 // 跨平台兼容个灯
-
-// hook.h
-#include <Windows.h>
 #include <iostream>
 #include <Windows.h>
 
