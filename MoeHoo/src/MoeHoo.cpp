@@ -71,7 +71,7 @@ namespace demo
 		status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "hookRkey", fn);
+		status = napi_set_named_property(env, exports, "HookRkey", fn);
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_create_function(env, nullptr, 0, GetRkey, nullptr, &fn);
