@@ -16,14 +16,11 @@ INT64 hookptr;
 INT64 hookorgptr;
 typedef INT64 (*FuncPtr)(INT64, INT64);
 std::mutex recvRkeyLock;
+FuncPtr func;
 // 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, INT64 a2)
 {
-	recvRkeyLock.lock();
-	FuncPtr func = reinterpret_cast<FuncPtr>(hookorgptr);
 	INT64 ret = func(a1,a2);
-	MessageBoxA(0,"","",0);
-	recvRkeyLock.unlock();
 	return ret;
 }
 DWORD_PTR searchRkeyDownloadHook()
@@ -47,6 +44,7 @@ namespace demo
 		hookptr = searchRkeyDownloadHook();
 		Hook(hookptr, recvRkey);
 		hookorgptr = GetFunctionAddress(hookptr);
+		 func = reinterpret_cast<FuncPtr>(hookorgptr);
 		status = napi_create_string_utf8(env, std::to_string(hookorgptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
