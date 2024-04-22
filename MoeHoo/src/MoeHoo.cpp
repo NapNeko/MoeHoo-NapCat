@@ -5,11 +5,12 @@
 #include <node_api.h>
 #include "MoeHoo.h"
 #include "ExecutableAnalyse.h"
-
+static std::string rkey = "";
 // include ${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
 
 // PE文件静态方法
 // PE内存搜索方案
+
 DWORD_PTR searchRkeyDownloadHook()
 {
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
@@ -27,8 +28,8 @@ namespace demo
 	{
 		napi_value greeting;
 		napi_status status;
-		//searchRkeyDownloadHook() CALL点处
-		status = napi_create_string_utf8(env, std::to_string(searchRkeyDownloadHook()).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		// searchRkeyDownloadHook() CALL点处
+		status = napi_create_string_utf8(env, std::to_string(searchRkeyDownloadHook() + 0x7).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
 		return greeting;
@@ -50,7 +51,7 @@ namespace demo
 
 	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
 
-} 
+}
 
 int def_test()
 {
@@ -60,7 +61,7 @@ int def_test()
 		std::vector<char> PEData(ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node"));
 		std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
 		size_t patternPos = SearchHexPattern(PEData, hexPattern);
-		
+
 		std::cout << "十六进制序列的文件偏移位置: " << std::hex << patternPos << std::endl;
 
 		// 计算RVA
