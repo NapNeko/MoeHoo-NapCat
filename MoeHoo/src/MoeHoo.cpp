@@ -49,7 +49,7 @@ namespace demo
 		hookorgptr = GetFunctionAddress(hookptr);
 		Hook(hookptr, recvRkey);
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
-		status = napi_create_string_utf8(env, std::to_string(hookorgptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
 		return greeting;
