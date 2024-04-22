@@ -36,6 +36,16 @@ namespace demo
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
 		RkeyHook.Hook(searchRkeyDownloadHook() + 0x7, &recvRkey);
+		status = napi_create_string_utf8(env, "hook!", NAPI_AUTO_LENGTH, &greeting);
+		if (status != napi_ok)
+			return nullptr;
+		return greeting;
+	}
+	napi_value GetRkey(napi_env env, napi_callback_info args)
+	{
+		napi_value greeting;
+		napi_status status;
+		// searchRkeyDownloadHook() CALL点处
 		status = napi_create_string_utf8(env, rkey.c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
@@ -45,12 +55,16 @@ namespace demo
 	{
 		napi_status status;
 		napi_value fn;
-
 		status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-
-		status = napi_set_named_property(env, exports, "hello", fn);
+		status = napi_set_named_property(env, exports, "hookRkey", fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_create_function(env, nullptr, 0, GetRkey, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+				status = napi_set_named_property(env, exports, "GetRkey", fn);
 		if (status != napi_ok)
 			return nullptr;
 		return exports;
