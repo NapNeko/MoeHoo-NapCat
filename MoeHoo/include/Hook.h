@@ -1,14 +1,10 @@
 #include <string>
-
+// 跨平台兼容个灯
 class InlineHook
 {
 
 };
-/*
-class IatHook{
 
-};
-*/
 
 /*
 jmp xxxxx
