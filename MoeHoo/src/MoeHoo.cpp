@@ -11,13 +11,16 @@ static std::string rkey = "";
 
 // PE文件静态方法
 // PE内存搜索方案
-WinHook RkeyHook;
 INT64 hookptr;
+INT64 hookorgptr;
+typedef INT64 (*FuncPtr)(INT64, char *);
+
 // 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, char *a2)
 {
-	rkey = a2;
-	return a1;
+	FuncPtr func = reinterpret_cast<FuncPtr>(hookorgptr);
+	INT64 ret = func(a1,a2);
+	return ret;
 }
 DWORD_PTR searchRkeyDownloadHook()
 {
@@ -38,9 +41,9 @@ namespace demo
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
-		
-		RkeyHook.Hook(hookptr, &recvRkey);
-		status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		Hook(hookptr, recvRkey);
+		hookorgptr = GetFunctionAddress(hookptr);
+		status = napi_create_string_utf8(env, std::to_string(hookorgptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
 		return greeting;

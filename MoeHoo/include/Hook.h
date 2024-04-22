@@ -6,43 +6,53 @@
 #include <iostream>
 #include <Windows.h>
 
-class WinCallHook
+bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
-public:
-	static UINT64 Hook(UINT64 dwAddr, LPVOID lpFunction)
+	void *targetFunction = reinterpret_cast<void *>(dwAddr);
+	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr - 5;
+	DWORD oldProtect;
+	if (!VirtualProtect(targetFunction, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
-		BYTE call[] = {0xe8, 0x90, 0x90, 0x90, 0x90};
-		UINT32 dwCalc = (UINT64)lpFunction - dwAddr + 0x5; // 判断是否超出32位范围
-		memcpy(&call[2], &dwCalc, 4);
+		std::cerr << "VirtualProtect failed." << std::endl;
+		return false;
 	}
 
-	static BOOL UnHook(UINT64 dwAddr, LPCSTR lpFuncName)
+	if (distance >= INT32_MIN && distance <= INT32_MAX)
 	{
+		// 直接进行小跳转
+		BYTE call[] = {0xE8, 0x00, 0x00, 0x00, 0x00}; // call instruction
+		*reinterpret_cast<INT32 *>(&call[1]) = static_cast<INT32>(distance);
+		memcpy(targetFunction, call, sizeof(call));
+	}
+	else
+	{
+		// 寻找附近的空闲内存空间并填充远跳转
+	}
+	// 恢复原来的内存保护属性
+	if (!VirtualProtect(targetFunction, 10, oldProtect, &oldProtect))
+	{
+		return false;
 	}
 
-	static BYTE *MemoryAddress()
-	{
-	}
-};
-
-/*
-jmp xxxxx
-原理有问题 jmp后应该保证自动jmp回来 待实现 在hook阶段unhook 对于多线程比较灾难 可以参考Frida的HOOK 此处仅HOOK WIN32 X64实现
-
-至少目标达到 Linux X64/Linux Arm64 Arm64指令集和ELF格式我不太熟悉
-void Hook()
-{
-	DWORD OldProtect;
-	if (VirtualProtect(OldMessageBoxW, 12, PAGE_EXECUTE_READWRITE, &OldProtect))
-	{
-		memcpy(Ori_Code, OldMessageBoxW, 12);               // 拷贝原始机器码指令
-		*(PINT64)(HookCode + 2) = (INT64)&MyMessageBoxW;    // 填充90为指定跳转地址
-	}
-	memcpy(OldMessageBoxW, &HookCode, sizeof(HookCode));    // 拷贝Hook机器指令
+	return true;
 }
-
-void UnHook()
+INT64 GetFunctionAddress(UINT64 ptr)
 {
-	memcpy(OldMessageBoxW, &Ori_Code, sizeof(Ori_Code));    // 恢复hook原始代码
+	// 读取操作码
+	const char *hptr = reinterpret_cast<const char *>(ptr);
+	unsigned char opcode = static_cast<unsigned char>(hptr[0]);
+	if (opcode != 0xE8)
+	{
+		std::cerr << "Not a call instruction!" << std::endl;
+		return 0;
+	}
+
+	// 读取相对偏移量
+	int32_t relativeOffset = *reinterpret_cast<const int32_t *>(hptr + 1);
+
+	// 计算函数地址
+	INT64 callAddress = reinterpret_cast<INT64>(hptr) + 5; // call 指令占 5 个字节
+	INT64 functionAddress = callAddress + relativeOffset;
+
+	return functionAddress;
 }
-*/
