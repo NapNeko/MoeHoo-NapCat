@@ -14,14 +14,15 @@ static std::string rkey = "";
 // PE内存搜索方案
 INT64 hookptr;
 INT64 hookorgptr;
-typedef INT64 (*FuncPtr)(INT64, char**);
+typedef INT64 (*FuncPtr)(INT64, char **);
 std::mutex recvRkeyLock;
 FuncPtr func;
 // 没有做多线程安全与回调 可能大问题
-INT64 recvRkey(INT64 a1, char** a2)
+INT64 recvRkey(INT64 a1, char **a2)
 {
-	MessageBoxA(0, "", *a2, 0);
+	// MessageBoxA(0, "", *a2, 0);
 	recvRkeyLock.lock();
+	rkey = *a2;
 	INT64 ret = func(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;
