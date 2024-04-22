@@ -4,7 +4,7 @@
 // hook.h
 #include <Windows.h>
 
-class MyHook
+class WinHook
 {
 public:
 	static UINT64 Hook(UINT64 dwAddr, LPVOID lpFunction)

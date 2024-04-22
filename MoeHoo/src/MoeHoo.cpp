@@ -5,12 +5,18 @@
 #include <node_api.h>
 #include "MoeHoo.h"
 #include "ExecutableAnalyse.h"
+#include <Hook.h>
 static std::string rkey = "";
 // include ${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
 
 // PE文件静态方法
 // PE内存搜索方案
-
+WinHook RkeyHook;
+INT64 recvRkey(INT64 a1, char *a2)
+{
+	rkey = a2;
+	return a1;
+}
 DWORD_PTR searchRkeyDownloadHook()
 {
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
@@ -29,7 +35,8 @@ namespace demo
 		napi_value greeting;
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
-		status = napi_create_string_utf8(env, std::to_string(searchRkeyDownloadHook() + 0x7).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		RkeyHook.Hook(searchRkeyDownloadHook() + 0x7, &recvRkey);
+		status = napi_create_string_utf8(env, rkey.c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
 		return greeting;
