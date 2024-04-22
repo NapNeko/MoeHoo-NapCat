@@ -24,6 +24,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 	}
 	else
 	{
+		//进行64Bit跳转
 	}
 	// 恢复原来的内存保护属性
 	if (!VirtualProtect(targetFunction, 10, oldProtect, &oldProtect))
