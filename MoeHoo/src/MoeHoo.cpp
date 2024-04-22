@@ -12,6 +12,7 @@ static std::string rkey = "";
 // PE文件静态方法
 // PE内存搜索方案
 WinHook RkeyHook;
+// 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, char *a2)
 {
 	rkey = a2;
