@@ -7,39 +7,7 @@
 #include "ExecutableAnalyse.h"
 
 // include ${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
-namespace demo
-{
 
-	napi_value Method(napi_env env, napi_callback_info args)
-	{
-		napi_value greeting;
-		napi_status status;
-		MessageBoxA(0, std::to_string(searchRkeyDownloadHook()).c_str(), "", 0);
-		status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
-		if (status != napi_ok)
-			return nullptr;
-		return greeting;
-	}
-
-	napi_value init(napi_env env, napi_value exports)
-	{
-		napi_status status;
-		napi_value fn;
-
-		status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
-		if (status != napi_ok)
-			return nullptr;
-
-		status = napi_set_named_property(env, exports, "hello", fn);
-		if (status != napi_ok)
-			return nullptr;
-		return exports;
-	}
-
-	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
-
-} 
-// namespace demo
 // PE文件静态方法
 // PE内存搜索方案
 DWORD_PTR searchRkeyDownloadHook()
@@ -78,3 +46,36 @@ int def_test()
 	system("pause");
 	return 0;
 }
+
+namespace demo
+{
+
+	napi_value Method(napi_env env, napi_callback_info args)
+	{
+		napi_value greeting;
+		napi_status status;
+		MessageBoxA(0, std::to_string(searchRkeyDownloadHook()).c_str(), "", 0);
+		status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
+		if (status != napi_ok)
+			return nullptr;
+		return greeting;
+	}
+
+	napi_value init(napi_env env, napi_value exports)
+	{
+		napi_status status;
+		napi_value fn;
+
+		status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_set_named_property(env, exports, "hello", fn);
+		if (status != napi_ok)
+			return nullptr;
+		return exports;
+	}
+
+	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
+
+} 
