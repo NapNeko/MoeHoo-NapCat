@@ -23,7 +23,7 @@ DWORD_PTR searchRkeyDownloadHook()
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
 	if (wrapperModule == NULL)
 		return 0;
-	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB";
+	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
 	DWORD_PTR address = SearchInModule(wrapperModule, hexPattern);
 	return address;
 }
