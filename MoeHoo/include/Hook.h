@@ -7,15 +7,15 @@
 class MyHook
 {
 public:
-	static UINT64 Hook(UINT64 dwAddr , LPVOID lpFunction)
+	static UINT64 Hook(UINT64 dwAddr, LPVOID lpFunction)
 	{
 		BYTE jmp[] =
-		{
-			0x48, 0xb8,               // jmp
-			0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00,   // address
-			0x50, 0xc3                // retn
-		};
+			{
+				0x48, 0xb8, // jmp
+				0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, // address
+				0x50, 0xc3				// retn
+			};
 
 		ReadProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0);
 		UINT64 dwCalc = (UINT64)lpFunction;
@@ -25,14 +25,14 @@ public:
 		return dwAddr;
 	}
 
-	static BOOL UnHook(UINT64 dwAddr , LPCSTR lpFuncName)
+	static BOOL UnHook(UINT64 dwAddr, LPCSTR lpFuncName)
 	{
 		if (WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0))
 			return TRUE;
 		return FALSE;
 	}
 
-	static BYTE* MemoryAddress()
+	static BYTE *MemoryAddress()
 	{
 		static BYTE backup[12];
 		return backup;
