@@ -36,7 +36,6 @@ DWORD_PTR SearchPatternInModule(HMODULE module, const std::string& hexPattern) {
     HANDLE processHandle = GetCurrentProcess();
     MODULEINFO modInfo;
     if (!GetModuleInformation(processHandle, module, &modInfo, sizeof(MODULEINFO))) {
-        std::cerr << "无法获取模块信息。" << std::endl;
         return 0;
     }
     std::vector<BYTE> pattern(hexPattern.begin(), hexPattern.end());

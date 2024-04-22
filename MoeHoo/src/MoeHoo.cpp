@@ -7,33 +7,39 @@
 #include "ExecutableAnalyse.h"
 
 //${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
-namespace demo {
+namespace demo
+{
 
-napi_value Method(napi_env env, napi_callback_info args) {
-  napi_value greeting;
-  napi_status status;
+	napi_value Method(napi_env env, napi_callback_info args)
+	{
+		napi_value greeting;
+		napi_status status;
 
-  status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
-  if (status != napi_ok) return nullptr;
-  return greeting;
-}
+		status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
+		if (status != napi_ok)
+			return nullptr;
+		return greeting;
+	}
 
-napi_value init(napi_env env, napi_value exports) {
-  napi_status status;
-  napi_value fn;
+	napi_value init(napi_env env, napi_value exports)
+	{
+		napi_status status;
+		napi_value fn;
 
-  status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
-  if (status != napi_ok) return nullptr;
+		status = napi_create_function(env, nullptr, 0, Method, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
 
-  status = napi_set_named_property(env, exports, "hello", fn);
-  if (status != napi_ok) return nullptr;
-  return exports;
-}
+		status = napi_set_named_property(env, exports, "hello", fn);
+		if (status != napi_ok)
+			return nullptr;
+		return exports;
+	}
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
+	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
 
-}  // namespace demo
-
+} // namespace demo
+// PE文件静态方法
 int def_test()
 {
 	try
@@ -59,5 +65,23 @@ int def_test()
 		std::cerr << "错误: " << e.what() << std::endl;
 	}
 	system("pause");
+	return 0;
+}
+// PE内存搜索方案
+int test()
+{
+	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
+	if (wrapperModule == NULL)
+		return 0;
+	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
+	DWORD_PTR rva = SearchPatternInModule(wrapperModule, hexPattern);
+	if (rva != 0)
+	{
+		std::cout << "找到模式的RVA: " << std::hex << rva << std::endl;
+	}
+	else
+	{
+		std::cerr << "在内存中未找到指定的模式。" << std::endl;
+	}
 	return 0;
 }
