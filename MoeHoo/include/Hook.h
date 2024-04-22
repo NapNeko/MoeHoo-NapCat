@@ -1,6 +1,43 @@
 #include <string>
 // 跨平台兼容个灯
 
+// hook.h
+#include <Windows.h>
+
+class MyHook
+{
+public:
+	static UINT64 Hook(UINT64 dwAddr , LPVOID lpFunction)
+	{
+		BYTE jmp[] =
+		{
+			0x48, 0xb8,               // jmp
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,   // address
+			0x50, 0xc3                // retn
+		};
+
+		ReadProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0);
+		UINT64 dwCalc = (UINT64)lpFunction;
+		memcpy(&jmp[2], &dwCalc, 8);
+
+		WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, jmp, 12, nullptr);
+		return dwAddr;
+	}
+
+	static BOOL UnHook(UINT64 dwAddr , LPCSTR lpFuncName)
+	{
+		if (WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0))
+			return TRUE;
+		return FALSE;
+	}
+
+	static BYTE* MemoryAddress()
+	{
+		static BYTE backup[12];
+		return backup;
+	}
+};
 
 /*
 jmp xxxxx
