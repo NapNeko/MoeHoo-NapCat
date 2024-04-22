@@ -9,7 +9,7 @@
 bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
 	void *targetFunction = reinterpret_cast<void *>(dwAddr);
-	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr - 5;
+	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr + 5;
 	DWORD oldProtect;
 	if (!VirtualProtect(targetFunction, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
@@ -26,7 +26,6 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 	}
 	else
 	{
-		// 寻找附近的空闲内存空间并填充远跳转
 	}
 	// 恢复原来的内存保护属性
 	if (!VirtualProtect(targetFunction, 10, oldProtect, &oldProtect))
