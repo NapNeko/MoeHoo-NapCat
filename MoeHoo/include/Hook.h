@@ -9,7 +9,7 @@
 bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
 	void *targetFunction = reinterpret_cast<void *>(dwAddr);
-	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr;
+	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr - 5;
 	MessageBoxA(0,std::to_string(static_cast<INT64>(distance)).c_str(),"1",0);
 	DWORD oldProtect;
 	if (!VirtualProtect(targetFunction, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
