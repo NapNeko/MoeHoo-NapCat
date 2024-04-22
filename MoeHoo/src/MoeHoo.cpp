@@ -20,7 +20,10 @@ FuncPtr func;
 // 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, INT64 a2)
 {
-	INT64 ret = func(a1,a2);
+	MessageBoxA(0, "", std::to_string(a2).c_str(), 0);
+	recvRkeyLock.lock();
+	INT64 ret = func(a1, a2);
+	recvRkeyLock.unlock();
 	return ret;
 }
 DWORD_PTR searchRkeyDownloadHook()
@@ -44,7 +47,7 @@ namespace demo
 		hookptr = searchRkeyDownloadHook();
 		Hook(hookptr, recvRkey);
 		hookorgptr = GetFunctionAddress(hookptr);
-		 func = reinterpret_cast<FuncPtr>(hookorgptr);
+		func = reinterpret_cast<FuncPtr>(hookorgptr);
 		status = napi_create_string_utf8(env, std::to_string(hookorgptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
