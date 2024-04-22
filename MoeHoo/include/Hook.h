@@ -3,39 +3,25 @@
 
 // hook.h
 #include <Windows.h>
+#include <iostream>
+#include <Windows.h>
 
-class WinHook
+class WinCallHook
 {
 public:
 	static UINT64 Hook(UINT64 dwAddr, LPVOID lpFunction)
 	{
-		BYTE jmp[] =
-			{
-				0x48, 0xb8, // jmp
-				0x00, 0x00, 0x00, 0x00,
-				0x00, 0x00, 0x00, 0x00, // address
-				0x50, 0xc3				// retn
-			};
-
-		ReadProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0);
-		UINT64 dwCalc = (UINT64)lpFunction;
-		memcpy(&jmp[2], &dwCalc, 8);
-
-		WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, jmp, 12, nullptr);
-		return dwAddr;
+		BYTE call[] = {0xe8, 0x90, 0x90, 0x90, 0x90};
+		UINT32 dwCalc = (UINT64)lpFunction - dwAddr + 0x5; // 判断是否超出32位范围
+		memcpy(&call[2], &dwCalc, 4);
 	}
 
 	static BOOL UnHook(UINT64 dwAddr, LPCSTR lpFuncName)
 	{
-		if (WriteProcessMemory(GetCurrentProcess(), (LPVOID)dwAddr, MemoryAddress(), 12, 0))
-			return TRUE;
-		return FALSE;
 	}
 
 	static BYTE *MemoryAddress()
 	{
-		static BYTE backup[12];
-		return backup;
 	}
 };
 

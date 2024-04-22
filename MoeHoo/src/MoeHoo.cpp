@@ -17,6 +17,7 @@ INT64 hookptr;
 INT64 recvRkey(INT64 a1, char *a2)
 {
 	rkey = a2;
+	return a1;
 }
 DWORD_PTR searchRkeyDownloadHook()
 {
