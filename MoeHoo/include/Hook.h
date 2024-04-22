@@ -9,7 +9,8 @@
 bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
 	void *targetFunction = reinterpret_cast<void *>(dwAddr);
-	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr + 5;
+	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr;
+	MessageBoxA(0,std::to_string(static_cast<INT64>(distance)).c_str(),"1",0);
 	DWORD oldProtect;
 	if (!VirtualProtect(targetFunction, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
@@ -17,7 +18,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 		return false;
 	}
 
-	if (distance >= INT32_MIN && distance <= INT32_MAX)
+	if (distance >= 0 && distance <= INT32_MAX)
 	{
 		// 直接进行小跳转
 		BYTE call[] = {0xE8, 0x00, 0x00, 0x00, 0x00}; // call instruction
