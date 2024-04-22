@@ -14,7 +14,7 @@ namespace demo
 	{
 		napi_value greeting;
 		napi_status status;
-
+		MessageBoxA(0, std::to_string(searchRkeyDownloadHook()).c_str(), "", 0);
 		status = napi_create_string_utf8(env, "world", NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
@@ -38,8 +38,19 @@ namespace demo
 
 	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
 
-} // namespace demo
+} 
+// namespace demo
 // PE文件静态方法
+// PE内存搜索方案
+DWORD_PTR searchRkeyDownloadHook()
+{
+	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
+	if (wrapperModule == NULL)
+		return 0;
+	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
+	DWORD_PTR address = SearchInModule(wrapperModule, hexPattern);
+	return address;
+}
 int def_test()
 {
 	try
@@ -65,23 +76,5 @@ int def_test()
 		std::cerr << "错误: " << e.what() << std::endl;
 	}
 	system("pause");
-	return 0;
-}
-// PE内存搜索方案
-int test()
-{
-	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
-	if (wrapperModule == NULL)
-		return 0;
-	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-	DWORD_PTR rva = SearchPatternInModule(wrapperModule, hexPattern);
-	if (rva != 0)
-	{
-		std::cout << "找到模式的RVA: " << std::hex << rva << std::endl;
-	}
-	else
-	{
-		std::cerr << "在内存中未找到指定的模式。" << std::endl;
-	}
 	return 0;
 }
