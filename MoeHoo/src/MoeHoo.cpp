@@ -47,8 +47,11 @@ namespace demo
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
 		hookorgptr = GetFunctionAddress(hookptr);
-		Hook(hookptr, recvRkey);
+		bool ret  = Hook(hookptr, recvRkey);
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
+		if(hookptr != 0 && hookorgptr != 0 && ret){
+			status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		}
 		status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
