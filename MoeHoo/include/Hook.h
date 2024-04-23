@@ -22,7 +22,6 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 		if (VirtualQuery(searchStart, &mbi, sizeof(mbi)) == 0)
 		{
 			break;
-			/
 		}
 		if (mbi.State == MEM_COMMIT && (mbi.Protect & PAGE_EXECUTE_READWRITE))
 		{
@@ -36,7 +35,6 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 	}
 	return nullptr;
 }
-
 
 bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
