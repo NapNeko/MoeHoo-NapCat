@@ -27,14 +27,35 @@ INT64 recvRkey(INT64 a1, char **a2)
 	recvRkeyLock.unlock();
 	return ret;
 }
-DWORD_PTR searchRkeyDownloadHook()
+INT64 searchRkeyDownloadHook()
 {
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
+	MODULEINFO modInfo;
 	if (wrapperModule == NULL)
+	{
 		return 0;
+	}
+	if (!GetModuleInformation(GetCurrentProcess(), wrapperModule, &modInfo, sizeof(MODULEINFO)))
+	{
+		return 0;
+	}
 	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB\xE8";
-	// 1CCACE2
-	DWORD_PTR address = SearchRangeAddressInModule(wrapperModule, hexPattern, 0x1CA0015, 0x1CF0015) + 0x7;
+	const char *expectedBytes = "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x41\x56\x48\x83\xEC\x20";
+	INT64 address = 0;
+	INT64 searchOffset = 0x1CA0015;
+	while (true)
+	{
+		address = SearchRangeAddressInModule(wrapperModule, hexPattern, hookorgptr, 0x1CF0015) + 0x7;
+		hookorgptr = GetFunctionAddress(hookptr);
+		// 45 33 C9 0F 57 C0 0F 11 01
+		if (memcmp(reinterpret_cast<void *>(hookorgptr), expectedBytes, 21) == 0)
+		{
+			// 匹配正确
+			break;
+		}
+		searchOffset = address - reinterpret_cast<INT64>(modInfo.lpBaseOfDll);
+	}
+
 	return address;
 }
 
@@ -47,8 +68,7 @@ namespace demo
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
-		//MessageBoxA(0, std::to_string(static_cast<INT64>(hookptr)).c_str(), "1", 0);
-		hookorgptr = GetFunctionAddress(hookptr);
+		// MessageBoxA(0, std::to_string(static_cast<INT64>(hookptr)).c_str(), "1", 0);
 
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
 		if (hookptr == 0 || hookorgptr == 0)

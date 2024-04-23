@@ -2,7 +2,7 @@
 // 跨平台兼容个灯
 #include <iostream>
 #include <Windows.h>
-INT64 GetFunctionAddress(UINT64 ptr)
+INT64 GetFunctionAddress(INT64 ptr)
 {
 	// 读取操作码
 	const char *hptr = reinterpret_cast<const char *>(ptr);
