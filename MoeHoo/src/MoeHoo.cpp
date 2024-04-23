@@ -32,8 +32,9 @@ DWORD_PTR searchRkeyDownloadHook()
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
 	if (wrapperModule == NULL)
 		return 0;
-	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-	DWORD_PTR address = SearchInModuleRange(wrapperModule, hexPattern, 0x1CD0015, 0x1CE0015);
+	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB\xE8";
+	// 1CCACE2
+	DWORD_PTR address = SearchInModuleRange(wrapperModule, hexPattern, 0x1CA0015, 0x1CF0015) + 0x7;
 	return address;
 }
 
@@ -46,7 +47,9 @@ namespace demo
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
+		//MessageBoxA(0, std::to_string(static_cast<INT64>(hookptr)).c_str(), "1", 0);
 		hookorgptr = GetFunctionAddress(hookptr);
+
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
 		if (hookptr == 0 || hookorgptr == 0)
 		{

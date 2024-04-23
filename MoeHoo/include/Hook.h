@@ -11,11 +11,12 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 	DWORD oldProtect;
 	if (!VirtualProtect(targetFunction, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
+		//MessageBoxA(0,std::to_string(static_cast<INT64>(distance)).c_str(),"2",0);
 		std::cerr << "VirtualProtect failed." << std::endl;
 		return false;
 	}
-
-	if (distance >= 0 && distance <= INT32_MAX)
+	// 有一个符号位
+	if (distance >= INT32_MIN && distance <= INT32_MAX)
 	{
 		// 直接进行小跳转
 		BYTE call[] = {0xE8, 0x00, 0x00, 0x00, 0x00}; // call instruction
@@ -24,7 +25,10 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 	}
 	else
 	{
+		// 距离过远
+		// MessageBoxA(0,std::to_string(static_cast<INT64>(distance)).c_str(),"跳转距离",0);
 		return false;
+		
 		//进行64Bit跳转
 	}
 	// 恢复原来的内存保护属性
