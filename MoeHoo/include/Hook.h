@@ -2,7 +2,26 @@
 // 跨平台兼容个灯
 #include <iostream>
 #include <Windows.h>
+INT64 GetFunctionAddress(UINT64 ptr)
+{
+	// 读取操作码
+	const char *hptr = reinterpret_cast<const char *>(ptr);
+	unsigned char opcode = static_cast<unsigned char>(hptr[0]);
+	if (opcode != 0xE8)
+	{
+		std::cerr << "Not a call instruction!" << std::endl;
+		return 0;
+	}
 
+	// 读取相对偏移量
+	int32_t relativeOffset = *reinterpret_cast<const int32_t *>(hptr + 1);
+
+	// 计算函数地址
+	INT64 callAddress = reinterpret_cast<INT64>(hptr) + 5; // call 指令占 5 个字节
+	INT64 functionAddress = callAddress + relativeOffset;
+
+	return functionAddress;
+}
 // 实现搜索某指针上下2GB的可用内存 进行填充远跳JMP 填充完成返回填充内存首地址 失败返回nullptr
 void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 {
@@ -55,7 +74,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 		new_ret = SearchAndFillJump(targetFunction, (void *)lpFunction);
 		if (new_ret == nullptr)
 		{
-			MessageBoxA(0, "error", "跳转失败", 0);
+			//MessageBoxA(0, "error", "跳转失败", 0);
 			return false;
 		}
 		distance = reinterpret_cast<INT64>(new_ret) - dwAddr - 5;
