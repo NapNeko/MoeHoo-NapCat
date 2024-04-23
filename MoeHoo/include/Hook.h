@@ -24,6 +24,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 	}
 	else
 	{
+		return false;
 		//进行64Bit跳转
 	}
 	// 恢复原来的内存保护属性
