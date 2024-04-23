@@ -50,12 +50,19 @@ namespace demo
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
 		if (hookptr == 0 || hookorgptr == 0)
 		{
-			status = napi_create_string_utf8(env, "error", NAPI_AUTO_LENGTH, &greeting);
+			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
 			if (status != napi_ok)
 				return nullptr;
 			return greeting;
 		}
 		bool ret = Hook(hookptr, recvRkey);
+		if (!ret)
+		{
+			status = napi_create_string_utf8(env, "error hook", NAPI_AUTO_LENGTH, &greeting);
+			if (status != napi_ok)
+				return nullptr;
+			return greeting;
+		}
 		status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
