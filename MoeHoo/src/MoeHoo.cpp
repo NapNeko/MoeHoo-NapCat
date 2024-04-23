@@ -20,13 +20,14 @@ FuncPtr func;
 // 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, char **a2)
 {
-	// MessageBoxA(0, "", *a2, 0);
+	MessageBoxA(0, "", *a2, 0);
 	recvRkeyLock.lock();
 	rkey = *a2;
 	INT64 ret = func(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;
 }
+
 INT64 searchRkeyDownloadHook()
 {
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
@@ -40,22 +41,30 @@ INT64 searchRkeyDownloadHook()
 		return 0;
 	}
 	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB\xE8";
-	const char *expectedBytes = "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x41\x56\x48\x83\xEC\x20";
+	std::string expectedBytes = "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x41\x56\x48\x83\xEC\x20";
 	INT64 address = 0;
 	INT64 searchOffset = 0x1CA0015;
-	while (true)
+	bool done = false;
+	while (!done)
 	{
 		address = SearchRangeAddressInModule(wrapperModule, hexPattern, hookorgptr, 0x1CF0015) + 0x7;
-		hookorgptr = GetFunctionAddress(hookptr);
-		// 45 33 C9 0F 57 C0 0F 11 01
-		if (memcmp(reinterpret_cast<void *>(hookorgptr), expectedBytes, 21) == 0)
+		if (address == 0)
 		{
-			// 匹配正确
+			done = true;
 			break;
 		}
+		hookorgptr = GetFunctionAddress(address);
+		BYTE *hookorgptr2 = reinterpret_cast<BYTE *>(hookorgptr);
+		MessageBoxA(0, std::to_string(hookorgptr).c_str(), std::to_string(std::equal(expectedBytes.begin(), expectedBytes.end(), hookorgptr2)).c_str(), 0);
+		if (std::equal(expectedBytes.begin(), expectedBytes.end(), hookorgptr2) == 0)
+		{
+			done = true;
+			break;
+		}
+
+		// 获得的RVA在CALL前面 无法再次匹配 进一步搜索
 		searchOffset = address - reinterpret_cast<INT64>(modInfo.lpBaseOfDll);
 	}
-
 	return address;
 }
 
@@ -69,9 +78,15 @@ namespace demo
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
 		// MessageBoxA(0, std::to_string(static_cast<INT64>(hookptr)).c_str(), "1", 0);
-
+		if (hookptr == 0)
+		{
+			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
+			if (status != napi_ok)
+				return nullptr;
+			return greeting;
+		}
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
-		if (hookptr == 0 || hookorgptr == 0)
+		if (hookorgptr == 0)
 		{
 			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
 			if (status != napi_ok)
