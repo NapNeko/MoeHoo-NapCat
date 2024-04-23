@@ -30,9 +30,9 @@ DWORD_PTR ModuleBaseToRVA(DWORD_PTR base, DWORD_PTR address)
 {
 	return address - base;
 }
-
+// Rkey 1CD0015-1CE0015
 // 搜索特定十六进制模式的函数
-DWORD_PTR SearchInModule(HMODULE module, const std::string &hexPattern)
+DWORD_PTR SearchInModuleRange(HMODULE module, const std::string &hexPattern, DWORD_PTR searchStartRVA, DWORD_PTR searchEndRVA)
 {
 	HANDLE processHandle = GetCurrentProcess();
 	MODULEINFO modInfo;
@@ -42,18 +42,20 @@ DWORD_PTR SearchInModule(HMODULE module, const std::string &hexPattern)
 	}
 	std::vector<BYTE> pattern(hexPattern.begin(), hexPattern.end());
 	// 在模块内存范围内搜索模式
-	BYTE *start = static_cast<BYTE *>(modInfo.lpBaseOfDll);
-	BYTE *end = start + modInfo.SizeOfImage - pattern.size();
+	BYTE *base = static_cast<BYTE *>(modInfo.lpBaseOfDll);
+	BYTE *searchStart = base + searchStartRVA;
+	BYTE *searchEnd = base + searchEndRVA;
 	DWORD_PTR address = 0;
 
-	for (BYTE *current = start; current < end; ++current)
+	// 确保搜索范围有效
+	if (searchStart >= base && searchEnd <= base + modInfo.SizeOfImage && searchStart < searchEnd)
 	{
-		if (std::equal(pattern.begin(), pattern.end(), current))
+		for (BYTE *current = searchStart; current < searchEnd; ++current)
 		{
-			// 不需要rva 这处就是实际地址
-			// rva = ModuleBaseToRVA(reinterpret_cast<DWORD_PTR>(modInfo.lpBaseOfDll), reinterpret_cast<DWORD_PTR>(current));
-			// return rva;
-			return reinterpret_cast<DWORD_PTR>(current);
+			if (std::equal(pattern.begin(), pattern.end(), current))
+			{
+				return reinterpret_cast<DWORD_PTR>(current);
+			}
 		}
 	}
 

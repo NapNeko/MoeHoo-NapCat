@@ -33,7 +33,7 @@ DWORD_PTR searchRkeyDownloadHook()
 	if (wrapperModule == NULL)
 		return 0;
 	std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-	DWORD_PTR address = SearchInModule(wrapperModule, hexPattern);
+	DWORD_PTR address = SearchInModuleRange(wrapperModule, hexPattern, 0x1CD0015, 0x1CE0015);
 	return address;
 }
 
@@ -47,11 +47,15 @@ namespace demo
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
 		hookorgptr = GetFunctionAddress(hookptr);
-		bool ret  = Hook(hookptr, recvRkey);
 		func = reinterpret_cast<FuncPtr>(hookorgptr);
-		if(hookptr != 0 && hookorgptr != 0 && ret){
-			status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
+		if (hookptr == 0 || hookorgptr == 0)
+		{
+			status = napi_create_string_utf8(env, "error", NAPI_AUTO_LENGTH, &greeting);
+			if (status != napi_ok)
+				return nullptr;
+			return greeting;
 		}
+		bool ret = Hook(hookptr, recvRkey);
 		status = napi_create_string_utf8(env, std::to_string(hookptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
 		if (status != napi_ok)
 			return nullptr;
