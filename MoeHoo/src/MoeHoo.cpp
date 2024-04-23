@@ -34,7 +34,7 @@ DWORD_PTR searchRkeyDownloadHook()
 		return 0;
 	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB\xE8";
 	// 1CCACE2
-	DWORD_PTR address = SearchInModuleRange(wrapperModule, hexPattern, 0x1CA0015, 0x1CF0015) + 0x7;
+	DWORD_PTR address = SearchRangeAddressInModule(wrapperModule, hexPattern, 0x1CA0015, 0x1CF0015) + 0x7;
 	return address;
 }
 
