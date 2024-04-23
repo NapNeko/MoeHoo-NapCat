@@ -20,7 +20,7 @@ FuncPtr func;
 // 没有做多线程安全与回调 可能大问题
 INT64 recvRkey(INT64 a1, char **a2)
 {
-	MessageBoxA(0, "", *a2, 0);
+	//MessageBoxA(0, "", *a2, 0);
 	recvRkeyLock.lock();
 	rkey = *a2;
 	INT64 ret = func(a1, a2);
@@ -40,8 +40,11 @@ INT64 searchRkeyDownloadHook()
 	{
 		return 0;
 	}
+	// 前置位置查找
 	std::string hexPattern_Before = "\xBA\x04\x00\x00\x00\x49\x8B\xCF\xE8";
+	// 标准位置查找
 	std::string hexPattern = "\x48\x8D\x56\x28\x48\x8B\xCB\xE8";
+	// 被调用函数特征
 	std::string expectedBytes = "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x41\x56\x48\x83\xEC\x20\x45\x33\xC9\x0F\x57\xC0\x0F\x11\x01\x4C\x89\x49\x10";
 	INT64 address = 0;
 	INT64 searchOffset = SearchRangeAddressInModule(wrapperModule, hexPattern_Before, 0x1CA0015, 0x1CF0015) + 0x8 - reinterpret_cast<INT64>(modInfo.lpBaseOfDll);
@@ -55,7 +58,7 @@ INT64 searchRkeyDownloadHook()
 			done = true;
 			break;
 		}
-		MessageBoxA(0, std::to_string(address).c_str(), std::to_string(searchOffset).c_str(), 0);
+		//MessageBoxA(0, std::to_string(address).c_str(), std::to_string(searchOffset).c_str(), 0);
 		hookorgptr = GetFunctionAddress(address);
 		BYTE *hookorgptr2 = reinterpret_cast<BYTE *>(hookorgptr);
 		// MessageBoxA(0, std::to_string(hookorgptr).c_str(), std::to_string(std::equal(expectedBytes.begin(), expectedBytes.end(), hookorgptr2)).c_str(), 0);
