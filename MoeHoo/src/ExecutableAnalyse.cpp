@@ -26,13 +26,13 @@ size_t SearchHexPattern(const std::vector<char> &data, const std::string &hexPat
 }
 
 // 用于将模块基址转换为RVA
-DWORD_PTR ModuleBaseToRVA(DWORD_PTR base, DWORD_PTR address)
+INT64 ModuleBaseToRVA(INT64 base, INT64 address)
 {
 	return address - base;
 }
 // Rkey 1CD0015-1CE0015
 // 搜索特定十六进制模式的函数
-DWORD_PTR SearchInModuleRange(HMODULE module, const std::string &hexPattern, DWORD_PTR searchStartRVA, DWORD_PTR searchEndRVA)
+INT64 SearchInModuleRange(HMODULE module, const std::string &hexPattern, INT64 searchStartRVA, INT64 searchEndRVA)
 {
 	HANDLE processHandle = GetCurrentProcess();
 	MODULEINFO modInfo;
@@ -45,7 +45,7 @@ DWORD_PTR SearchInModuleRange(HMODULE module, const std::string &hexPattern, DWO
 	BYTE *base = static_cast<BYTE *>(modInfo.lpBaseOfDll);
 	BYTE *searchStart = base + searchStartRVA;
 	BYTE *searchEnd = base + searchEndRVA;
-	DWORD_PTR address = 0;
+	INT64 address = 0;
 
 	// 确保搜索范围有效
 	if (searchStart >= base && searchEnd <= base + modInfo.SizeOfImage && searchStart < searchEnd)
@@ -54,7 +54,7 @@ DWORD_PTR SearchInModuleRange(HMODULE module, const std::string &hexPattern, DWO
 		{
 			if (std::equal(pattern.begin(), pattern.end(), current))
 			{
-				return reinterpret_cast<DWORD_PTR>(current);
+				return reinterpret_cast<INT64>(current);
 			}
 		}
 	}

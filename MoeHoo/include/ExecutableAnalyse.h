@@ -7,4 +7,4 @@
 
 std::vector<char> ReadFileToMemory(const std::string &filePath);
 size_t SearchHexPattern(const std::vector<char> &data, const std::string &hexPattern);
-DWORD_PTR SearchInModuleRange(HMODULE module, const std::string &hexPattern, DWORD_PTR searchStartRVA, DWORD_PTR searchEndRVA);
+INT64 SearchInModuleRange(HMODULE module, const std::string &hexPattern, INT64 searchStartRVA, INT64 searchEndRVA);
