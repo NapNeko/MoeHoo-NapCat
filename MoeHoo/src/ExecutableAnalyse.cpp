@@ -31,6 +31,45 @@ INT64 ModuleBaseToRVA(INT64 base, INT64 address)
 	return address - base;
 }
 // 从某模块里面某位置搜索特征出地址
+#ifdef _LINUX_PLATFORM_
+INT64 SearchRangeAddressInModule(void* module, const std::string& hexPattern, INT64 searchStartRVA, INT64 searchEndRVA)
+{
+    dl_info info;
+    if (dladdr(module, &info) == 0)
+    {
+        return 0;
+    }
+
+    std::vector<BYTE> pattern;
+    for (size_t i = 0; i < hexPattern.length(); i += 2)
+    {
+        pattern.push_back(static_cast<BYTE>(std::stoi(hexPattern.substr(i, 2), nullptr, 16)));
+    }
+
+    BYTE* base = static_cast<BYTE*>(info.dli_fbase);
+    BYTE* searchStart = base + searchStartRVA;
+    if (searchEndRVA == 0)
+    {
+        // 如果留空表示搜索到结束
+        searchEndRVA = info.dli_memsz;
+    }
+    BYTE* searchEnd = base + searchEndRVA;
+
+    // 确保搜索范围有效
+    if (searchStart >= base && searchEnd <= base + info.dli_memsz && searchStart < searchEnd)
+    {
+        for (BYTE* current = searchStart; current < searchEnd; ++current)
+        {
+            if (std::equal(pattern.begin(), pattern.end(), current))
+            {
+                return reinterpret_cast<INT64>(current);
+            }
+        }
+    }
+
+    return 0;
+}
+#elif _WIN_PLATFORM_
 INT64 SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, INT64 searchStartRVA, INT64 searchEndRVA)
 {
     HANDLE processHandle = GetCurrentProcess();
@@ -65,3 +104,4 @@ INT64 SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, 
 
     return 0;
 }
+#endif
