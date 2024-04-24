@@ -33,9 +33,8 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 		0x49, 0xBB,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x41, 0xFF, 0xE3};
-
+	//*reinterpret_cast<INT64 *>(&jumpInstruction[2]) = reinterpret_cast<INT64>(targetAddress);
 	memcpy(&jumpInstruction[2], &targetAddress, sizeof(targetAddress));
-
 	MEMORY_BASIC_INFORMATION mbi;
 	char *searchStart = static_cast<char *>(baseAddress) - 0x80000000;
 	char *searchEnd = static_cast<char *>(baseAddress) + 0x80000000;
@@ -46,12 +45,34 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 		{
 			break;
 		}
-		if (mbi.State == MEM_COMMIT && (mbi.Protect & PAGE_EXECUTE_READWRITE))
+		if (mbi.State == MEM_COMMIT)
 		{
-			if (mbi.RegionSize >= sizeof(jumpInstruction))
+			for (char *addr = static_cast<char *>(mbi.BaseAddress); addr < static_cast<char *>(mbi.BaseAddress) + mbi.RegionSize - 1024 * 5; ++addr)
 			{
-				memcpy(mbi.BaseAddress, jumpInstruction, sizeof(jumpInstruction));
-				return mbi.BaseAddress;
+
+				bool isFree = true;
+				for (int i = 0; i < 1024 * 5; ++i)
+				{
+					if (addr[i] != 0)
+					{
+						isFree = false;
+						break;
+					}
+				}
+				if (isFree)
+				{
+					DWORD oldProtect;
+					addr = addr + 0x200;
+					// std::cout << std::to_string((INT64)addr) << std::endl;
+					VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READWRITE, &oldProtect);
+					memcpy(addr, jumpInstruction, sizeof(jumpInstruction));
+					if (!VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READ, &oldProtect))
+					{
+						return nullptr;
+					}
+
+					return addr;
+				}
 			}
 		}
 		searchStart += mbi.RegionSize;
@@ -115,12 +136,13 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 		new_ret = SearchAndFillJump(targetFunction, (void *)lpFunction);
 		if (new_ret == nullptr)
 		{
-			// MessageBoxA(0, "error", "跳转失败", 0);
+			std::cout << "搜索空闲内存是吧" << std::endl;
 			return false;
 		}
 		distance = reinterpret_cast<INT64>(new_ret) - dwAddr - 5;
 	}
 	// 直接进行小跳转
+
 	BYTE call[] = {0xE8, 0x00, 0x00, 0x00, 0x00}; // 短CALL
 	*reinterpret_cast<INT32 *>(&call[1]) = static_cast<INT32>(distance);
 	memcpy(targetFunction, call, sizeof(call));
