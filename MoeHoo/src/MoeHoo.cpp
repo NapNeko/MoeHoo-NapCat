@@ -63,7 +63,7 @@ INT64 searchRkeyDownloadHook()
 	{
 		address = SearchRangeAddressInModule(wrapperModule, hexPattern, searchOffset, 0x1CF0015) + 0x7;
 		// MessageBoxA(0, std::to_string((UINT64)address).c_str(), std::to_string((UINT64)searchOffset).c_str(), 0);
-		if (address == 0)
+		if (address <= 0)
 		{
 			done = true;
 			break;
