@@ -1,7 +1,10 @@
 #include <string>
 // 跨平台兼容个灯
 #include <iostream>
+#ifdef _WIN_PLATFORM_
 #include <Windows.h>
+#elif _LINUX_PLATFORM_
+#endif
 INT64 GetFunctionAddress(INT64 ptr)
 {
 	// 读取操作码

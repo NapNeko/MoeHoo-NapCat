@@ -2,8 +2,12 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <windows.h>
+#ifdef _WIN_PLATFORM_
+#include <Windows.h>
 #include <psapi.h>
+#elif _LINUX_PLATFORM_
+#endif
+
 
 std::vector<char> ReadFileToMemory(const std::string &filePath);
 size_t SearchHexPattern(const std::vector<char> &data, const std::string &hexPattern);
