@@ -3,13 +3,33 @@ cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0042 NEW)
 
 project (MoeHoo)
+# 指定utf8
 
-# define NPI_VERSION
+#
+#if(MSVC)
+#	add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+#	add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+#endif()
+
+# 平台宏定义
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+    set(_WIN_PLATFORM_ true)
+    add_definitions(-D _WIN_PLATFORM_)
+endif()
+
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    set(_LINUX_PLATFORM_ true)
+    add_definitions(-D _LINUX_PLATFORM_)
+endif()
+
+# 设置NAPI版本
 add_definitions(-DNAPI_VERSION=7)
 
+# 设置CPP标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# 引入NAPI支持
 include_directories(${CMAKE_JS_INC})
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/MoeHoo/include/")
