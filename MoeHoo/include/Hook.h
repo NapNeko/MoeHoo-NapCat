@@ -23,6 +23,7 @@ INT64 GetFunctionAddress(INT64 ptr)
 	return functionAddress;
 }
 // 实现搜索某指针上下2GB的可用内存 进行填充远跳JMP 填充完成返回填充内存首地址 失败返回nullptr
+#ifdef _WIN_PLATFORM_
 void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 {
 	unsigned char jumpInstruction[14] = {
@@ -54,7 +55,44 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 	}
 	return nullptr;
 }
+#elif _LINUX_PLATFORM_
+void *SearchAndFillJump(void *baseAddress, void *targetAddress)
+{
+	unsigned char jumpInstruction[14] = {
+		0x49, 0xBB,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x41, 0xFF, 0xE3};
 
+	memcpy(&jumpInstruction[2], &targetAddress, sizeof(targetAddress));
+
+	// Iterate through memory regions
+	char *searchStart = static_cast<char *>(baseAddress) - 0x80000000;
+	char *searchEnd = static_cast<char *>(baseAddress) + 0x80000000;
+
+	while (searchStart < searchEnd)
+	{
+		// Use mmap to query memory information
+		struct stat mbi;
+		if (mmap(searchStart, sizeof(mbi), PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) == MAP_FAILED)
+		{
+			break;
+		}
+
+		// Check if the region is writable
+		if (mbi.st_mode & S_IWUSR)
+		{
+			if (mbi.st_size >= sizeof(jumpInstruction))
+			{
+				memcpy(searchStart, jumpInstruction, sizeof(jumpInstruction));
+				return searchStart;
+			}
+		}
+		searchStart += mbi.st_size;
+	}
+	return nullptr;
+}
+#endif
+#ifdef _WIN_PLATFORM_
 bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 {
 	void *targetFunction = reinterpret_cast<void *>(dwAddr);
@@ -74,7 +112,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 		new_ret = SearchAndFillJump(targetFunction, (void *)lpFunction);
 		if (new_ret == nullptr)
 		{
-			//MessageBoxA(0, "error", "跳转失败", 0);
+			// MessageBoxA(0, "error", "跳转失败", 0);
 			return false;
 		}
 		distance = reinterpret_cast<INT64>(new_ret) - dwAddr - 5;
@@ -91,3 +129,28 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 
 	return true;
 }
+
+#elif _LINUX_PLATFORM_
+bool Hook(UINT64 dwAddr, LPVOID lpFunction)
+{
+	void *targetFunction = reinterpret_cast<void *>(dwAddr);
+	mprotect(get_page_addr(targetFunction), getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC); // 设置内存可写
+	INT64 distance = reinterpret_cast<INT64>(lpFunction) - dwAddr - 5;
+	void *new_ret = nullptr;
+	if (distance < INT32_MIN || distance > INT32_MAX)
+	{
+		new_ret = SearchAndFillJump(targetFunction, (void *)lpFunction);
+		if (new_ret == nullptr)
+		{
+			// MessageBoxA(0, "error", "跳转失败", 0);
+			return false;
+		}
+		distance = reinterpret_cast<INT64>(new_ret) - dwAddr - 5;
+	}
+	BYTE call[] = {0xE8, 0x00, 0x00, 0x00, 0x00}; // 短CALL
+	*reinterpret_cast<INT32 *>(&call[1]) = static_cast<INT32>(distance);
+	memcpy(targetFunction, call, sizeof(call));
+	mprotect(get_page_addr(targetFunction), getpagesize(), PROT_READ | PROT_EXEC); // 还原内存
+}
+
+#endif
