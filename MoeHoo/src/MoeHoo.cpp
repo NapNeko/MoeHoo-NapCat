@@ -30,6 +30,8 @@ INT64 recvRkey(INT64 a1, char **a2)
 
 INT64 searchRkeyDownloadHook()
 {
+#ifdef _LINUX_PLATFORM_
+#elif _WIN_PLATFORM_
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
 	MODULEINFO modInfo;
 	if (wrapperModule == NULL)
@@ -81,6 +83,7 @@ INT64 searchRkeyDownloadHook()
 		searchOffset = address - reinterpret_cast<INT64>(modInfo.lpBaseOfDll);
 	}
 	return address;
+#endif
 }
 
 namespace demo
