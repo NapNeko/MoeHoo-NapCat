@@ -26,51 +26,33 @@
 // }
 
 // 用于将模块基址转换为RVA
-INT64 ModuleBaseToRVA(INT64 base, INT64 address)
+int64_t ModuleBaseToRVA(int64_t base, int64_t address)
 {
-	return address - base;
+    return address - base;
 }
 // 从某模块里面某位置搜索特征出地址
-#ifdef _LINUX_PLATFORM_
-INT64 SearchRangeAddressInModule(void* module, const std::string& hexPattern, INT64 searchStartRVA, INT64 searchEndRVA)
+#if defined(_LINUX_PLATFORM_)
+int64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, const std::string &hexPattern, int64_t searchStartRVA, int64_t searchEndRVA)
 {
-    dl_info info;
-    if (dladdr(module, &info) == 0)
-    {
-        return 0;
-    }
-
-    std::vector<BYTE> pattern;
-    for (size_t i = 0; i < hexPattern.length(); i += 2)
-    {
-        pattern.push_back(static_cast<BYTE>(std::stoi(hexPattern.substr(i, 2), nullptr, 16)));
-    }
-
-    BYTE* base = static_cast<BYTE*>(info.dli_fbase);
-    BYTE* searchStart = base + searchStartRVA;
+    std::vector<uint8_t> pattern(hexPattern.begin(), hexPattern.end());
+    uint8_t *base = reinterpret_cast<uint8_t *>(module->start());
+    uint8_t *searchStart = base + searchStartRVA;
+    uint8_t *searchEnd;
     if (searchEndRVA == 0)
-    {
-        // 如果留空表示搜索到结束
-        searchEndRVA = info.dli_memsz;
-    }
-    BYTE* searchEnd = base + searchEndRVA;
+        searchEnd = reinterpret_cast<uint8_t *>(module->end());
+    else
+        searchEnd = base + searchEndRVA;
 
     // 确保搜索范围有效
-    if (searchStart >= base && searchEnd <= base + info.dli_memsz && searchStart < searchEnd)
-    {
-        for (BYTE* current = searchStart; current < searchEnd; ++current)
-        {
+    if (searchEnd <= reinterpret_cast<uint8_t *>(module->end()))
+        for (uint8_t *current = searchStart; current < searchEnd; ++current)
             if (std::equal(pattern.begin(), pattern.end(), current))
-            {
-                return reinterpret_cast<INT64>(current);
-            }
-        }
-    }
+                return reinterpret_cast<int64_t>(current);
 
     return 0;
 }
-#elif _WIN_PLATFORM_
-INT64 SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, INT64 searchStartRVA, INT64 searchEndRVA)
+#elif defined(_WIN_PLATFORM_)
+int64_t SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, int64_t searchStartRVA, int64_t searchEndRVA)
 {
     HANDLE processHandle = GetCurrentProcess();
     MODULEINFO modInfo;
@@ -78,26 +60,25 @@ INT64 SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, 
     {
         return 0;
     }
-    std::vector<BYTE> pattern(hexPattern.begin(), hexPattern.end());
+    std::vector<uint8_t> pattern(hexPattern.begin(), hexPattern.end());
     // 在模块内存范围内搜索模式
-    BYTE *base = static_cast<BYTE *>(modInfo.lpBaseOfDll);
-    BYTE *searchStart = base + searchStartRVA;
+    uint8_t *base = static_cast<uint8_t *>(modInfo.lpBaseOfDll);
+    uint8_t *searchStart = base + searchStartRVA;
     if (searchEndRVA == 0)
     {
         // 如果留空表示搜索到结束
         searchEndRVA = modInfo.SizeOfImage;
     }
-    BYTE *searchEnd = base + searchEndRVA;
-    INT64 address = 0;
+    uint8_t *searchEnd = base + searchEndRVA;
 
     // 确保搜索范围有效
     if (searchStart >= base && searchEnd <= base + modInfo.SizeOfImage && searchStart < searchEnd)
     {
-        for (BYTE *current = searchStart; current < searchEnd; ++current)
+        for (uint8_t *current = searchStart; current < searchEnd; ++current)
         {
             if (std::equal(pattern.begin(), pattern.end(), current))
             {
-                return reinterpret_cast<INT64>(current);
+                return reinterpret_cast<int64_t>(current);
             }
         }
     }

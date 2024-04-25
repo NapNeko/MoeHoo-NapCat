@@ -2,16 +2,18 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#ifdef _WIN_PLATFORM_
+
+#if defined(_WIN_PLATFORM_)
 #include <Windows.h>
 #include <psapi.h>
-#elif _LINUX_PLATFORM_
+#elif defined(_LINUX_PLATFORM_)
+#include <proc_maps.h>
 #endif
 
-//std::vector<char> ReadFileToMemory(const std::string &filePath);
+// std::vector<char> ReadFileToMemory(const std::string &filePath);
 size_t SearchHexPattern(const std::vector<char> &data, const std::string &hexPattern);
-#ifdef _LINUX_PLATFORM_
-INT64 SearchRangeAddressInModule(void *module, const std::string &hexPattern, INT64 searchStartRVA = 0, INT64 searchEndRVA = 0);
-#elif _WIN_PLATFORM_
-INT64 SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, INT64 searchStartRVA = 0, INT64 searchEndRVA = 0);
+#if defined(_LINUX_PLATFORM_)
+int64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, const std::string &hexPattern, int64_t searchStartRVA = 0, int64_t searchEndRVA = 0);
+#elif defined(_WIN_PLATFORM_)
+int64_t SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, int64_t searchStartRVA = 0, int64_t searchEndRVA = 0);
 #endif
