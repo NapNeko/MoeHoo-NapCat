@@ -60,7 +60,7 @@ int64_t searchRkeyDownloadHook()
 		if (tokens.size() > 5)
 			for (int i = 5; i < tokens.size(); i++)
 				pmaps->module_name += tokens[i];
-		printf("start: %lx, end: %lx, offset: %x, module_name: %s\n", pmaps->start(), pmaps->end(), pmaps->offset, pmaps->module_name.c_str());
+		// printf("start: %lx, end: %lx, offset: %x, module_name: %s\n", pmaps->start(), pmaps->end(), pmaps->offset, pmaps->module_name.c_str());
 		if (pmaps->module_name.find("wrapper.node") != std::string::npos && pmaps->executable && pmaps->readable)
 		{
 			std::string hexPattern_Before = "\xBE\x04\x00\x00\x00\xB9\x53\x00\x00\x00\x53\x55\x41\x52\x50\x41\x56\xE8";
@@ -71,40 +71,29 @@ int64_t searchRkeyDownloadHook()
 			int64_t address = 0;
 			// 需要判断
 			int64_t beforeOffect = SearchRangeAddressInModule(pmaps, hexPattern_Before, 0x1CB0001, 0x1CFFA80);
-			printf("beforeOffect: %lx\n", beforeOffect);
+			// printf("beforeOffect: %lx\n", beforeOffect);
 			if (beforeOffect <= 0)
-			{
 				return 0;
-			}
 			int64_t searchOffset = beforeOffect + 18 - pmaps->start();
-			// 0x1CB0015;
-			bool done = false;
-			while (!done)
+			while (true)
 			{
 				address = SearchRangeAddressInModule(pmaps, hexPattern, searchOffset);
-				printf("address: %lx\n", address);
+				// printf("address: %lx\n", address);
 				if (address <= 0)
-				{
-					done = true;
-					break;
-				}
+					return 0;
 				address += 10;
 				hookorgptr = GetFunctionAddress(address);
-				uint8_t *hookorgptr2 = reinterpret_cast<uint8_t *>(hookorgptr);
-				printf("hookorgptr: %lx\n", hookorgptr);
-				if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), hookorgptr2))
-				{
-					done = true;
-					break;
-				}
+				// printf("hookorgptr: %lx\n", hookorgptr);
+				for(int i = 0; i < 32; i++)
+					printf("%02x ", reinterpret_cast<uint8_t *>(hookorgptr)[i]);
+				if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), reinterpret_cast<uint8_t *>(hookorgptr)))
+					return address;
 
 				// 获得的RVA在CALL前面 无法再次匹配 进一步搜索
 				searchOffset = address - pmaps->start();
 			}
-			return address;
 		}
 	}
-	maps.close();
 	return 0;
 #elif defined(_WIN_PLATFORM_)
 	HMODULE wrapperModule = GetModuleHandleW(L"wrapper.node"); // 内存
@@ -131,23 +120,15 @@ int64_t searchRkeyDownloadHook()
 	}
 	int64_t searchOffset = beforeOffect + 8 - reinterpret_cast<int64_t>(modInfo.lpBaseOfDll);
 	// 0x1CB0015;
-	bool done = false;
-	while (!done)
+	while (true)
 	{
 		address = SearchRangeAddressInModule(wrapperModule, hexPattern, searchOffset, 0x1CF0015);
 		if (address <= 0)
-		{
-			done = true;
-			break;
-		}
+			return 0;
 		address += 7;
 		hookorgptr = GetFunctionAddress(address);
-		uint8_t *hookorgptr2 = reinterpret_cast<uint8_t *>(hookorgptr);
-		if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), hookorgptr2) == 0)
-		{
-			done = true;
-			break;
-		}
+		if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), reinterpret_cast<uint8_t *>(hookorgptr)) == 0)
+			return 0;
 
 		// 获得的RVA在CALL前面 无法再次匹配 进一步搜索
 		searchOffset = address - reinterpret_cast<int64_t>(modInfo.lpBaseOfDll);
@@ -164,15 +145,7 @@ namespace demo
 		napi_status status;
 		// searchRkeyDownloadHook() CALL点处
 		hookptr = searchRkeyDownloadHook();
-		if (hookptr == 0)
-		{
-			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
-			if (status != napi_ok)
-				return nullptr;
-			return greeting;
-		}
-		func = reinterpret_cast<FuncPtr>(hookorgptr);
-		if (hookorgptr == 0)
+		if (hookptr == 0 || hookorgptr == 0)
 		{
 			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
 			if (status != napi_ok)
