@@ -136,7 +136,7 @@ bool Hook(UINT64 dwAddr, LPVOID lpFunction)
 		new_ret = SearchAndFillJump(targetFunction, (void *)lpFunction);
 		if (new_ret == nullptr)
 		{
-			std::cout << "搜索空闲内存是吧" << std::endl;
+			std::cout << "搜索空闲内存失败" << std::endl;
 			return false;
 		}
 		distance = reinterpret_cast<INT64>(new_ret) - dwAddr - 5;
