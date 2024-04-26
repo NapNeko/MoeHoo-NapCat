@@ -128,7 +128,7 @@ int64_t searchRkeyDownloadHook()
 		address += 7;
 		hookorgptr = GetFunctionAddress(address);
 		if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), reinterpret_cast<uint8_t *>(hookorgptr)) == 0)
-			return 0;
+			return address;
 
 		// 获得的RVA在CALL前面 无法再次匹配 进一步搜索
 		searchOffset = address - reinterpret_cast<int64_t>(modInfo.lpBaseOfDll);
