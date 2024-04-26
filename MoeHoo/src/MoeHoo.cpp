@@ -127,6 +127,7 @@ int64_t searchRkeyDownloadHook()
 			return 0;
 		address += 7;
 		hookorgptr = GetFunctionAddress(address);
+		func = (FuncPtr)hookorgptr;
 		if (std::equal(expecteduint8_ts.begin(), expecteduint8_ts.end(), reinterpret_cast<uint8_t *>(hookorgptr)) == 0)
 			return address;
 
