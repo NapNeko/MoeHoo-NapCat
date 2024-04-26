@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#define _LINUX_PLATFORM_
+// #define _LINUX_PLATFORM_
 // #define _WIN_PLATFORM_
 
 #if defined(_WIN_PLATFORM_)

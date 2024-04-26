@@ -11,18 +11,22 @@
 
 // PE文件静态方法
 // PE内存搜索方案
-typedef int64_t (*FuncPtr)(int64_t, char **);
+typedef uint64_t (*FuncPtr)(uint64_t, uint64_t);
 uint64_t callptr;
 FuncPtr orifuncptr;
 
 std::mutex recvRkeyLock;
 std::string rkey = "";
 // 没有做多线程安全与回调 可能大问题
-int64_t recvRkey(int64_t a1, char **a2)
+uint64_t recvRkey(uint64_t a1, uint64_t a2)
 {
-	printf("recvRkey: %s\n", *a2);
 	recvRkeyLock.lock();
-	rkey = *a2;
+#if defined(_LINUX_PLATFORM_)
+	rkey = *reinterpret_cast<const char **>(a2 + 16);
+#elif defined(_WIN_PLATFORM_)
+	rkey = *reinterpret_cast<const char **>(a2);
+#endif
+	printf("recvRkey: %s\n", rkey.c_str());
 	int64_t ret = orifuncptr(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;

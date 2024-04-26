@@ -87,7 +87,7 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 {
 	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
 	int64_t distance = reinterpret_cast<uint64_t>(lpFunction) - startAddr;
-	printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
+	// printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
 	DWORD oldProtect;
 	if (!VirtualProtect(callAddr, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
@@ -100,11 +100,11 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 		void *new_ret = SearchAndFillJump(callAddr, lpFunction);
 		if (new_ret == nullptr)
 		{
-			std::cout << "搜索空闲内存失败" << std::endl;
+			printf("搜索空闲内存失败");
 			return false;
 		}
 		distance = reinterpret_cast<int64_t>(new_ret) - startAddr;
-		printf("new_ret: %p, new_distance: %lld\n", new_ret, distance);
+		// printf("new_ret: %p, new_distance: %lld\n", new_ret, distance);
 	}
 	// 直接进行小跳转
 
@@ -150,14 +150,14 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 {
 	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
 	int64_t distance = reinterpret_cast<int64_t>(lpFunction) - startAddr;
-	printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
+	// printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
 	auto get_page_addr = [](void *addr) -> void *
 	{
 		return (void *)((uintptr_t)addr & ~(getpagesize() - 1));
 	};
 	if (mprotect(get_page_addr(callAddr), 2 * getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC) == -1) // 设置内存可写 两倍 pagesize 防止处于页边界
 		return false;
-	printf("mprotect\n");
+	// printf("mprotect\n");
 	void *new_ret = nullptr;
 	if (distance < INT32_MIN || distance > INT32_MAX)
 	{
@@ -167,11 +167,9 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 			return false;
 		}
 		distance = reinterpret_cast<int64_t>(new_ret) - startAddr;
-		printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
+		// printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
 	}
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	// for (int i = 0; i < 10; i++)
-	// 	printf("%02x ", reinterpret_cast<uint8_t *>(callAddr)[i]);
 	return mprotect(get_page_addr(callAddr), 2 * getpagesize(), PROT_READ | PROT_EXEC) == -1; // 还原内存
 }
 
