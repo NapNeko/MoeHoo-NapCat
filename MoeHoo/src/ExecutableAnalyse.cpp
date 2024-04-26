@@ -24,17 +24,16 @@
 // 	}
 // 	return pos;
 // }
-
 // 用于将模块基址转换为RVA
-int64_t ModuleBaseToRVA(int64_t base, int64_t address)
-{
-    return address - base;
-}
+// int64_t ModuleBaseToRVA(int64_t base, int64_t address)
+// {
+//     return address - base;
+// }
+
 // 从某模块里面某位置搜索特征出地址
 #if defined(_LINUX_PLATFORM_)
-int64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, const std::string &hexPattern, int64_t searchStartRVA, int64_t searchEndRVA)
+uint64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, const std::vector<uint8_t> &pattern, uint64_t searchStartRVA, uint64_t searchEndRVA)
 {
-    std::vector<uint8_t> pattern(hexPattern.begin(), hexPattern.end());
     uint8_t *base = reinterpret_cast<uint8_t *>(module->start());
     uint8_t *searchStart = base + searchStartRVA;
     uint8_t *searchEnd;
@@ -52,7 +51,7 @@ int64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, const
     return 0;
 }
 #elif defined(_WIN_PLATFORM_)
-int64_t SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern, int64_t searchStartRVA, int64_t searchEndRVA)
+uint64_t SearchRangeAddressInModule(HMODULE module, const std::vector<uint8_t> &pattern, uint64_t searchStartRVA, uint64_t searchEndRVA)
 {
     HANDLE processHandle = GetCurrentProcess();
     MODULEINFO modInfo;
@@ -60,7 +59,6 @@ int64_t SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern
     {
         return 0;
     }
-    std::vector<uint8_t> pattern(hexPattern.begin(), hexPattern.end());
     // 在模块内存范围内搜索模式
     uint8_t *base = static_cast<uint8_t *>(modInfo.lpBaseOfDll);
     uint8_t *searchStart = base + searchStartRVA;
@@ -72,16 +70,10 @@ int64_t SearchRangeAddressInModule(HMODULE module, const std::string &hexPattern
     uint8_t *searchEnd = base + searchEndRVA;
 
     // 确保搜索范围有效
-    if (searchStart >= base && searchEnd <= base + modInfo.SizeOfImage && searchStart < searchEnd)
-    {
+    if (searchStart >= base && searchEnd <= base + modInfo.SizeOfImage)
         for (uint8_t *current = searchStart; current < searchEnd; ++current)
-        {
             if (std::equal(pattern.begin(), pattern.end(), current))
-            {
-                return reinterpret_cast<int64_t>(current);
-            }
-        }
-    }
+                return reinterpret_cast<uint64_t>(current);
 
     return 0;
 }
