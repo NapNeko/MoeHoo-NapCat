@@ -8,7 +8,6 @@
 #include <cstring>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/stat.h>
 #endif
 
 void *GetCallAddress(uint8_t *ptr)
@@ -16,7 +15,7 @@ void *GetCallAddress(uint8_t *ptr)
 	// 读取操作码
 	if (ptr[0] != 0xE8)
 	{
-		std::cerr << "Not a call instruction!" << std::endl;
+		printf("Not a call instruction!\n");
 		return 0;
 	}
 
@@ -29,26 +28,26 @@ void *GetCallAddress(uint8_t *ptr)
 
 	return reinterpret_cast<void *>(functionAddress);
 }
-#if defined(_WIN_PLATFORM_)
-// 实现搜索某指针上下2GB的可用内存 进行填充远跳JMP 填充完成返回填充内存首地址 失败返回nullptr
-void *SearchAndFillJump(void *baseAddress, void *targetAddress)
+
+void *SearchAndFillJump(uint64_t baseAddress, void *targetAddress)
 {
-	unsigned char jumpInstruction[14] = {
+	uint8_t jumpInstruction[] = {
 		0x49, 0xBB,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x41, 0xFF, 0xE3};
-	//*reinterpret_cast<int64_t *>(&jumpInstruction[2]) = reinterpret_cast<int64_t>(targetAddress);
-	memcpy(&jumpInstruction[2], &targetAddress, sizeof(targetAddress));
-	MEMORY_BASIC_INFORMATION mbi;
-	char *searchStart = static_cast<char *>(baseAddress) - 0x80000000;
-	char *searchEnd = static_cast<char *>(baseAddress) + 0x80000000;
 
-	while (searchStart < searchEnd)
+	memcpy(jumpInstruction + 2, &targetAddress, 8);
+
+	// Iterate through memory regions
+	uint64_t searchStart = baseAddress - 0x7fffffff;
+	uint64_t searchEnd = baseAddress + 0x7fffffff;
+
+#if defined(_WIN_PLATFORM_)
+	while (searchStart < searchEnd - sizeof(jumpInstruction))
 	{
-		if (VirtualQuery(searchStart, &mbi, sizeof(mbi)) == 0)
-		{
+		MEMORY_BASIC_INFORMATION mbi;
+		if (VirtualQuery(reinterpret_cast<void *>(searchStart), &mbi, sizeof(mbi)) == 0)
 			break;
-		}
 		if (mbi.State == MEM_COMMIT)
 		{
 			for (char *addr = static_cast<char *>(mbi.BaseAddress); addr < static_cast<char *>(mbi.BaseAddress) + mbi.RegionSize - 1024 * 5; ++addr)
@@ -66,14 +65,14 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 				if (isFree)
 				{
 					DWORD oldProtect;
-					addr = addr + 0x200;
-					// std::cout << std::to_string((int64_t)addr) << std::endl;
-					VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READWRITE, &oldProtect);
+					addr += 0x200;
+					printf("addr: %p\n", addr);
+
+					if (!VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READWRITE, &oldProtect))
+						break;
 					memcpy(addr, jumpInstruction, sizeof(jumpInstruction));
 					if (!VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READ, &oldProtect))
-					{
-						return nullptr;
-					}
+						break;
 
 					return addr;
 				}
@@ -81,96 +80,107 @@ void *SearchAndFillJump(void *baseAddress, void *targetAddress)
 		}
 		searchStart += mbi.RegionSize;
 	}
+#elif defined(_LINUX_PLATFORM_)
+	// 保证地址对齐
+	searchStart &= 0xfffffffffffff000;
+	searchStart += 0x1000;
+	searchEnd &= 0xfffffffffffff000;
+
+	auto pmap = hak::get_maps();
+	do
+	{
+		auto fpmap = pmap;
+		pmap = fpmap->next();
+		if (std::min(pmap->start(), searchEnd) - std::max(fpmap->end(), searchStart) > 0x2000) // 搜索一片 0x2000 大小的空区域
+		{
+			void *addr = mmap(reinterpret_cast<void *>(std::max(fpmap->end(), searchStart)), 0x2000, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+			printf("addr: %p\n", addr);
+			if (addr == MAP_FAILED)
+			{
+				printf("mmap failed\n");
+				continue;
+			}
+			if (reinterpret_cast<uint64_t>(addr) > searchEnd - sizeof(jumpInstruction))
+			{
+				munmap(addr, 0x2000);
+				printf("addr > searchEnd\n");
+				continue;
+			}
+			memcpy(addr, jumpInstruction, sizeof(jumpInstruction));
+			if (mprotect(addr, 0x2000, PROT_READ | PROT_EXEC) == -1) // 设置内存 r-w
+			{
+				munmap(addr, 0x2000);
+				printf("mprotect failed\n");
+				continue;
+			}
+			return addr;
+		}
+	} while (pmap->next() != nullptr);
+
+#endif
 	return nullptr;
 }
+
 bool Hook(uint8_t *callAddr, void *lpFunction)
 {
 	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
 	int64_t distance = reinterpret_cast<uint64_t>(lpFunction) - startAddr;
-	// printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
+	printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
+#if defined(_WIN_PLATFORM_)
 	DWORD oldProtect;
 	if (!VirtualProtect(callAddr, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
-		// MessageBoxA(0,std::to_string(static_cast<int64_t>(distance)).c_str(),"2",0);
-		std::cerr << "VirtualProtect failed." << std::endl;
+		printf("VirtualProtect failed\n");
 		return false;
 	}
 	if (distance < INT32_MIN || distance > INT32_MAX)
 	{
-		void *new_ret = SearchAndFillJump(callAddr, lpFunction);
+		void *new_ret = SearchAndFillJump(startAddr, lpFunction);
 		if (new_ret == nullptr)
 		{
-			printf("搜索空闲内存失败");
+			printf("Can't find a place to jump\n");
 			return false;
 		}
-		distance = reinterpret_cast<int64_t>(new_ret) - startAddr;
+		distance = reinterpret_cast<uint64_t>(new_ret) - startAddr;
 		// printf("new_ret: %p, new_distance: %lld\n", new_ret, distance);
 	}
 	// 直接进行小跳转
-
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	// 恢复原来的内存保护属性
-	return VirtualProtect(callAddr, 10, oldProtect, nullptr);
-}
-#elif defined(_LINUX_PLATFORM_)
-void *SearchAndFillJump(void *baseAddress, void *targetAddress)
-{
-	unsigned char jumpInstruction[14] = {
-		0x49, 0xBB,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x41, 0xFF, 0xE3};
-
-	memcpy(&jumpInstruction[2], &targetAddress, sizeof(targetAddress));
-
-	// Iterate through memory regions
-	char *searchStart = static_cast<char *>(baseAddress) - 0x80000000;
-	char *searchEnd = static_cast<char *>(baseAddress) + 0x80000000;
-
-	while (searchStart < searchEnd)
+	if (!VirtualProtect(callAddr, 10, oldProtect, nullptr))			 // 恢复原来的内存保护属性
 	{
-		// Use mmap to query memory information
-		struct stat mbi;
-		if (mmap(searchStart, sizeof(mbi), PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) == MAP_FAILED)
-			break;
-
-		// Check if the region is writable
-		if (mbi.st_mode & S_IWUSR)
-		{
-			if (mbi.st_size >= sizeof(jumpInstruction))
-			{
-				memcpy(searchStart, jumpInstruction, sizeof(jumpInstruction));
-				return searchStart;
-			}
-		}
-		searchStart += mbi.st_size;
+		printf("VirtualProtect failed\n");
+		return false;
 	}
-	return nullptr;
-}
-bool Hook(uint8_t *callAddr, void *lpFunction)
-{
-	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
-	int64_t distance = reinterpret_cast<int64_t>(lpFunction) - startAddr;
-	// printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
+	return true;
+#elif defined(_LINUX_PLATFORM_)
 	auto get_page_addr = [](void *addr) -> void *
 	{
 		return (void *)((uintptr_t)addr & ~(getpagesize() - 1));
 	};
+
 	if (mprotect(get_page_addr(callAddr), 2 * getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC) == -1) // 设置内存可写 两倍 pagesize 防止处于页边界
-		return false;
-	// printf("mprotect\n");
-	void *new_ret = nullptr;
-	if (distance < INT32_MIN || distance > INT32_MAX)
 	{
-		if ((new_ret = SearchAndFillJump(callAddr, lpFunction)) == nullptr)
+		printf("mprotect failed\n");
+		return false;
+	}
+	// if (distance < INT32_MIN || distance > INT32_MAX)
+	{
+		void *new_ret = SearchAndFillJump(startAddr, lpFunction);
+		if (new_ret == nullptr)
 		{
-			printf("跳转失败");
+			printf("Can't find a place to jump\n");
 			return false;
 		}
-		distance = reinterpret_cast<int64_t>(new_ret) - startAddr;
-		// printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
+		distance = reinterpret_cast<uint64_t>(new_ret) - startAddr;
+		printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
 	}
-	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	return mprotect(get_page_addr(callAddr), 2 * getpagesize(), PROT_READ | PROT_EXEC) == -1; // 还原内存
-}
 
+	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4);					   // 修改 call 地址
+	if (mprotect(get_page_addr(callAddr), 2 * getpagesize(), PROT_READ | PROT_EXEC) == -1) // 还原内存保护属性
+	{
+		printf("mprotect failed\n");
+		return false;
+	}
+	return true;
 #endif
+}

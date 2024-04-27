@@ -2,7 +2,13 @@
 #define PROC_MAPS_H
 
 #include <memory>
+#include <fstream>
+#include <sstream>
 #include <string>
+#include <vector>
+#include <functional>
+
+#include "unistd.h"
 
 namespace hak {
     class proc_maps: public std::enable_shared_from_this<proc_maps> {
@@ -36,6 +42,8 @@ namespace hak {
 
         auto next() -> std::shared_ptr<proc_maps>&;
     };
+
+    auto get_maps(pid_t pid = 0) -> std::shared_ptr<proc_maps>;
 }
 
 #endif // PROC_MAPS_H
