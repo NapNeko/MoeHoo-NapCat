@@ -34,5 +34,6 @@ jobs:
       id: strings
       shell: bash
       run: |
+        ls
         npm i
-        npm run rebuild
+        npm run install
