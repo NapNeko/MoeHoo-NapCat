@@ -34,7 +34,5 @@ jobs:
       id: strings
       shell: bash
       run: |
-        ls
-        pwd
         npm i
         npm run install
