@@ -66,7 +66,7 @@ void *SearchAndFillJump(uint64_t baseAddress, void *targetAddress)
 				{
 					DWORD oldProtect;
 					addr += 0x200;
-					printf("addr: %p\n", addr);
+					// printf("addr: %p\n", addr);
 
 					if (!VirtualProtect(addr, sizeof(jumpInstruction), PAGE_EXECUTE_READWRITE, &oldProtect))
 						break;
@@ -94,7 +94,7 @@ void *SearchAndFillJump(uint64_t baseAddress, void *targetAddress)
 		if (std::min(pmap->start(), searchEnd) - std::max(fpmap->end(), searchStart) > 0x2000) // 搜索一片 0x2000 大小的空区域
 		{
 			void *addr = mmap(reinterpret_cast<void *>(std::max(fpmap->end(), searchStart)), 0x2000, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-			printf("addr: %p\n", addr);
+			// printf("addr: %p\n", addr);
 			if (addr == MAP_FAILED)
 			{
 				printf("mmap failed\n");
@@ -125,8 +125,9 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 {
 	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
 	int64_t distance = reinterpret_cast<uint64_t>(lpFunction) - startAddr;
-	printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
 #if defined(_WIN_PLATFORM_)
+	// printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
+
 	DWORD oldProtect;
 	if (!VirtualProtect(callAddr, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
@@ -153,6 +154,8 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	}
 	return true;
 #elif defined(_LINUX_PLATFORM_)
+	// printf("Hooking %p to %p, distance: %ld\n", callAddr, lpFunction, distance);
+
 	auto get_page_addr = [](void *addr) -> void *
 	{
 		return (void *)((uintptr_t)addr & ~(getpagesize() - 1));
@@ -163,7 +166,7 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 		printf("mprotect failed\n");
 		return false;
 	}
-	// if (distance < INT32_MIN || distance > INT32_MAX)
+	if (distance < INT32_MIN || distance > INT32_MAX)
 	{
 		void *new_ret = SearchAndFillJump(startAddr, lpFunction);
 		if (new_ret == nullptr)
@@ -172,7 +175,7 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 			return false;
 		}
 		distance = reinterpret_cast<uint64_t>(new_ret) - startAddr;
-		printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
+		// printf("new_ret: %p, new_distance: %ld\n", new_ret, distance);
 	}
 
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4);					   // 修改 call 地址

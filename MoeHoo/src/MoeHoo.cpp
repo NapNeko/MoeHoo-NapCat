@@ -23,7 +23,7 @@ uint64_t recvRkey(uint64_t a1, uint64_t a2)
 #elif defined(_WIN_PLATFORM_)
 	rkey = *reinterpret_cast<const char **>(a2);
 #endif
-	printf("recvRkey: %s\n", rkey.c_str());
+	// printf("recvRkey: %s\n", rkey.c_str());
 	int64_t ret = orifuncptr(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;
