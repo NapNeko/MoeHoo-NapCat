@@ -34,6 +34,5 @@ jobs:
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         npm i
-        npm run install
+        npm run rebuild
