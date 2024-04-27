@@ -36,3 +36,8 @@ jobs:
       run: |
         npm i
         npm run install
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+          name: MoeHoo.${{ matrix.os }}.x64
+          path: build/Release/MoeHoo.node
