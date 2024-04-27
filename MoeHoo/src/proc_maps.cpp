@@ -1,3 +1,5 @@
+#ifdef _LINUX_PLATFORM_
+
 #include "proc_maps.h"
 
 hak::proc_maps::proc_maps(uint64_t start, uint64_t end)
@@ -111,3 +113,5 @@ auto hak::get_maps(pid_t pid) -> std::shared_ptr<proc_maps>
     });
     return head;
 }
+
+#endif
