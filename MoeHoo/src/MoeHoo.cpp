@@ -63,7 +63,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 				}
 			}
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
-			if ((int64)searchOffset <= 0)
+			if ((int64_t)searchOffset <= 0)
 			{
 				break;
 			}
