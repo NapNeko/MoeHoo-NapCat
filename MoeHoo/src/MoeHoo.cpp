@@ -49,14 +49,14 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 			std::vector<uint8_t> expected_v(expected, expected + sizeof(expected));
 
 			// 需要判断
-			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v);
+			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v, 0x3700001, 0x3800001);
 			printf("beforeOffect: %lx\n", beforeOffect);
 			if (beforeOffect <= 0)
 				break;
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
 			while (true)
 			{
-				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset);
+				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset, 0x3800001);
 				printf("address: %lx\n", address);
 				if (address <= 0)
 					break;
