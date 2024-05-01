@@ -23,7 +23,7 @@ uint64_t recvRkey(uint64_t a1, uint64_t a2)
 #elif defined(_WIN_PLATFORM_)
 	rkey = *reinterpret_cast<const char **>(a2);
 #endif
-	printf("recvRkey: %s\n", rkey.c_str());
+	//printf("recvRkey: %s\n", rkey.c_str());
 	int64_t ret = orifuncptr(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;
@@ -50,19 +50,19 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 
 			// 需要判断
 			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v, 0x3700001, 0x3800001);
-			printf("beforeOffect: %lx\n", beforeOffect);
+			//printf("beforeOffect: %lx\n", beforeOffect);
 			if (beforeOffect <= 0)
 				break;
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
 			while (true)
 			{
 				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset, 0x3800001);
-				printf("address: %lx\n", address);
+				//printf("address: %lx\n", address);
 				if (address <= 0)
 					break;
 				address += sizeof(hexPattern) - 1;
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-				printf("funcptr: %p\n", funcptr);
+				//printf("funcptr: %p\n", funcptr);
 				if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 					return std::make_pair(address, funcptr);
 
