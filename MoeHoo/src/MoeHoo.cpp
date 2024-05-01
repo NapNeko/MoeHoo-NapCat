@@ -50,14 +50,14 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 			// 需要判断
 			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v);
 			// printf("beforeOffect: %lx\n", beforeOffect);
-			if (beforeOffect == 0)
+			if (beforeOffect <= 0)
 				break;
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
 			while (true)
 			{
 				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset);
 				// printf("address: %lx\n", address);
-				if (address == 0)
+				if (address <= 0)
 					break;
 				address += sizeof(hexPattern) - 1;
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
@@ -98,7 +98,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 	{
 		uint64_t address = SearchRangeAddressInModule(wrapperModule, hexPattern_v, searchOffset, 0x1CF0015);
 		// printf("address: %llx\n", address);
-		if (address == 0)
+		if (address <= 0)
 			break;
 		address += sizeof(hexPattern) - 1;
 		FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
