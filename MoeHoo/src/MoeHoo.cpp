@@ -57,12 +57,14 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 				// 进行老版本特征搜索
 				std::vector<uint8_t> hexPattern_Before_v2(hexPattern_Before2, hexPattern_Before2 + sizeof(hexPattern_Before2));
 				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2, 0x3700001, 0x3800001);
-				if (beforeOffect <= 0)
+				printf("0-beforeOffect: %lx\n", beforeOffect);
+			        if (beforeOffect <= 0)
 				{
 					break;
 				}
-				printf("beforeOffect: %lx\n", beforeOffect);
+				//printf("beforeOffect: %lx\n", beforeOffect);
 			}
+			printf("1-beforeOffect: %lx\n", beforeOffect);
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
 			if ((int64_t)searchOffset <= 0)
 			{
