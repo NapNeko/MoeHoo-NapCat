@@ -86,15 +86,15 @@ void llex_maps(pid_t pid, const std::function<void(std::shared_ptr<hak::proc_map
 
         auto address = tokens[0];
         std::string::size_type pos = address.find('-');
-        uint64_t start_addr = std::stoll(address.substr(0, pos), nullptr, 16);
-        uint64_t end_addr = std::stoll(address.substr(pos + 1), nullptr, 16);
+        uint64_t start_addr = std::strtoull(address.substr(0, pos), nullptr, 16);
+        uint64_t end_addr = std::strtoull(address.substr(pos + 1), nullptr, 16);
         auto pmaps = std::make_shared<hak::proc_maps>(start_addr, end_addr);
         auto perms = tokens[1];
         pmaps->readable = perms[0] == 'r';
         pmaps->writable = perms[1] == 'w';
         pmaps->executable = perms[2] == 'x';
         pmaps->is_private = perms[3] == 'p';
-        pmaps->offset = std::stoll(tokens[2], nullptr, 16);
+        pmaps->offset = std::strtoull(tokens[2], nullptr, 16);
         if (tokens.size() > 5)
             for (int i = 5; i < tokens.size(); i++)
                 pmaps->module_name += tokens[i];
