@@ -23,7 +23,7 @@ uint64_t recvRkey(uint64_t a1, uint64_t a2)
 #elif defined(_WIN_PLATFORM_)
 	rkey = *reinterpret_cast<const char **>(a2);
 #endif
-	//printf("recvRkey: %s\n", rkey.c_str());
+	// printf("recvRkey: %s\n", rkey.c_str());
 	int64_t ret = orifuncptr(a1, a2);
 	recvRkeyLock.unlock();
 	return ret;
@@ -39,6 +39,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 		if (pmap->module_name.find("wrapper.node") != std::string::npos && pmap->executable && pmap->readable)
 		{
 			uint8_t hexPattern_Before[] = {0x49, 0x89, 0xC5, 0x44, 0x89, 0xF0, 0x49, 0x09, 0xC4, 0x4D, 0x89, 0x65, 0x20, 0x0F, 0x57, 0xC0, 0x41, 0x0F, 0x11, 0x45, 0x28};
+			uint8_t hexPattern_Before2[] = {0x48, 0x89, 0x74, 0x24, 0x28, 0x48, 89, 0x4C, 0x24, 0x20, 0x48, 0x89, 0x18, 0x48, 0x89, 0x68, 0x08, 0x8B, 0x54, 0x24, 0x0C, 0x89, 0x50, 0x10, 0x48, 0x8D, 0x4C, 0x24, 0x10, 0x4C, 0x89, 0xE7, 0x48, 0x8B, 0x5C, 0x24, 0x38, 0x48, 0x89 0xDE, 0xE8};
 			std::vector<uint8_t> hexPattern_Before_v(hexPattern_Before, hexPattern_Before + sizeof(hexPattern_Before));
 			// 标准位置查找
 			uint8_t hexPattern[] = {0x48, 0x8B, 0x1C, 0x24, 0x48, 0x89, 0xDF, 0x4C, 0x89, 0xE6, 0xE8};
@@ -50,19 +51,31 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 
 			// 需要判断
 			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v, 0x3700001, 0x3800001);
-			//printf("beforeOffect: %lx\n", beforeOffect);
+			// printf("beforeOffect: %lx\n", beforeOffect);
 			if (beforeOffect <= 0)
-				break;
+			{
+				// 进行老版本特征搜索
+				std::vector<uint8_t> hexPattern_Before_v2(hexPattern_Before2, hexPattern_Before2 + sizeof(hexPattern_Before2));
+				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2, 0x3700001, 0x3800001);
+				if (beforeOffect <= 0)
+				{
+					break;
+				}
+			}
 			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
+			if ((int64)searchOffset <= 0)
+			{
+				break;
+			}
 			while (true)
 			{
 				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset, 0x3800001);
-				//printf("address: %lx\n", address);
+				// printf("address: %lx\n", address);
 				if (address <= 0)
 					break;
 				address += sizeof(hexPattern) - 1;
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-				//printf("funcptr: %p\n", funcptr);
+				// printf("funcptr: %p\n", funcptr);
 				if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 					return std::make_pair(address, funcptr);
 
