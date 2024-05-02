@@ -44,7 +44,7 @@ uint64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, cons
 
     // 确保搜索范围有效
     if (searchEnd >= reinterpret_cast<uint8_t *>(module->end())){
-        printf("out of moudle end")
+        printf("out of moudle end");
         searchEnd = reinterpret_cast<uint8_t *>(module->end());
     }
     for (uint8_t *current = searchStart; current < searchEnd; ++current)
