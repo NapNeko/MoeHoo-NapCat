@@ -49,13 +49,13 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 								  0x0F, 0x11, 0x04, 0x24, 0x5B, 0x41, 0x5C, 0x41, 0x5E, 0x41, 0x5F, 0x5D, 0xC3, 0x4C};
 			std::vector<uint8_t> expected_v(expected, expected + sizeof(expected));
 			// 需要判断
-			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v, 0x3700001, 0x3800001);
+			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v);
 			printf("beforeOffect: %lx\n", beforeOffect);
 			if (beforeOffect <= 0)
 			{
 				// 进行老版本特征搜索
 				std::vector<uint8_t> hexPattern_Before_v2(hexPattern_Before2, hexPattern_Before2 + sizeof(hexPattern_Before2));
-				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2, 0x3700001, 0x3800001);
+				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2);
 				printf("0-beforeOffect: %lx\n", beforeOffect);
 			        if (beforeOffect <= 0)
 				{
@@ -71,7 +71,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 			}
 			while (true)
 			{
-				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset, 0x3800001);
+				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset);
 				printf("address: %lx\n", address);
 				if (address <= 0)
 					break;
