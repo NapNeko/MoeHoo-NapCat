@@ -43,10 +43,13 @@ uint64_t SearchRangeAddressInModule(std::shared_ptr<hak::proc_maps> module, cons
         searchEnd = base + searchEndRVA;
 
     // 确保搜索范围有效
-    if (searchEnd <= reinterpret_cast<uint8_t *>(module->end()))
-        for (uint8_t *current = searchStart; current < searchEnd; ++current)
-            if (std::equal(pattern.begin(), pattern.end(), current))
-                return reinterpret_cast<int64_t>(current);
+    if (searchEnd >= reinterpret_cast<uint8_t *>(module->end())){
+        printf("out of moudle end")
+        searchEnd = reinterpret_cast<uint8_t *>(module->end());
+    }
+    for (uint8_t *current = searchStart; current < searchEnd; ++current)
+        if (std::equal(pattern.begin(), pattern.end(), current))
+            return reinterpret_cast<int64_t>(current);
 
     return 0;
 }
