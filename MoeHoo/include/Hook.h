@@ -91,9 +91,9 @@ void *SearchAndFillJump(uint64_t baseAddress, void *targetAddress)
 	{
 		auto fpmap = pmap;
 		pmap = fpmap->next();
-		if (std::min(pmap->start(), searchEnd) - std::max(fpmap->end(), searchStart) > 0x2000) // 搜索一片 0x2000 大小的空区域
+		if (std::min(pmap->start(), searchEnd) - std::max(fpmap->end(), searchStart) > 0x3000) // 搜索一片 0x3000 大小的空区域
 		{
-			void *addr = mmap(reinterpret_cast<void *>(std::max(fpmap->end(), searchStart)), 0x2000, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+			void *addr = mmap(reinterpret_cast<void *>(std::max(fpmap->end(), searchStart)), 0x3000, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 			// printf("addr: %p\n", addr);
 			if (addr == MAP_FAILED)
 			{
@@ -102,14 +102,14 @@ void *SearchAndFillJump(uint64_t baseAddress, void *targetAddress)
 			}
 			if (reinterpret_cast<uint64_t>(addr) > searchEnd - sizeof(jumpInstruction))
 			{
-				munmap(addr, 0x2000);
+				munmap(addr, 0x3000);
 				printf("addr > searchEnd\n");
 				continue;
 			}
 			memcpy(addr, jumpInstruction, sizeof(jumpInstruction));
-			if (mprotect(addr, 0x2000, PROT_READ | PROT_EXEC) == -1) // 设置内存 r-w
+			if (mprotect(addr, 0x3000, PROT_READ | PROT_EXEC) == -1) // 设置内存 r-w
 			{
-				munmap(addr, 0x2000);
+				munmap(addr, 0x3000);
 				printf("mprotect failed\n");
 				continue;
 			}
@@ -126,12 +126,14 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	uint64_t startAddr = reinterpret_cast<uint64_t>(callAddr) + 5;
 	int64_t distance = reinterpret_cast<uint64_t>(lpFunction) - startAddr;
 #if defined(_WIN_PLATFORM_)
-	// printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
+	printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
 
 	DWORD oldProtect;
+	DWORD oldProtect2;
 	if (!VirtualProtect(callAddr, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
-		printf("VirtualProtect failed\n");
+		std::cout << GetLastError() << std::endl;
+		printf("VirtualProtect failed-1\n");
 		return false;
 	}
 	if (distance < INT32_MIN || distance > INT32_MAX)
@@ -147,10 +149,10 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	}
 	// 直接进行小跳转
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	if (!VirtualProtect(callAddr, 10, oldProtect, nullptr))			 // 恢复原来的内存保护属性
+	if (!VirtualProtect(callAddr, 10, oldProtect, &oldProtect2))			 // 恢复原来的内存保护属性
 	{
-		printf("VirtualProtect failed\n");
-		return false;
+		printf("VirtualProtect failed-2\n");
+		//return false;
 	}
 	return true;
 #elif defined(_LINUX_PLATFORM_)
