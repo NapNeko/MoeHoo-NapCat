@@ -39,7 +39,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 		if (pmap->module_name.find("wrapper.node") != std::string::npos && pmap->executable && pmap->readable)
 		{
 			uint8_t hexPattern_Before[] = {0x49, 0x89, 0xC5, 0x44, 0x89, 0xF0, 0x49, 0x09, 0xC4, 0x4D, 0x89, 0x65, 0x20, 0x0F, 0x57, 0xC0, 0x41, 0x0F, 0x11, 0x45, 0x28};
-			uint8_t hexPattern_Before2[] = {0x48, 0x89, 0x74, 0x24, 0x28, 0x48, 89, 0x4C, 0x24, 0x20, 0x48, 0x89, 0x18, 0x48, 0x89, 0x68, 0x08, 0x8B, 0x54, 0x24, 0x0C, 0x89, 0x50, 0x10, 0x48, 0x8D, 0x4C, 0x24, 0x10, 0x4C, 0x89, 0xE7, 0x48, 0x8B, 0x5C, 0x24, 0x38, 0x48, 0x89,0xDE, 0xE8};
+			uint8_t hexPattern_Before2[] = {0x48, 0x89, 0x74, 0x24, 0x28, 0x48, 89, 0x4C, 0x24, 0x20, 0x48, 0x89, 0x18, 0x48, 0x89, 0x68, 0x08, 0x8B, 0x54, 0x24, 0x0C, 0x89, 0x50, 0x10, 0x48, 0x8D, 0x4C, 0x24, 0x10, 0x4C, 0x89, 0xE7, 0x48, 0x8B, 0x5C, 0x24, 0x38, 0x48, 0x89, 0xDE, 0xE8};
 			std::vector<uint8_t> hexPattern_Before_v(hexPattern_Before, hexPattern_Before + sizeof(hexPattern_Before));
 			// 标准位置查找
 			uint8_t hexPattern[] = {0x48, 0x8B, 0x1C, 0x24, 0x48, 0x89, 0xDF, 0x4C, 0x89, 0xE6, 0xE8};
@@ -50,34 +50,27 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 			std::vector<uint8_t> expected_v(expected, expected + sizeof(expected));
 			// 需要判断
 			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v);
-			//printf("beforeOffect: %lx\n", beforeOffect);
-			if (beforeOffect <= 0)
+			// printf("new-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pnpm->offset));
+			if (beforeOffect == 0)
 			{
 				// 进行老版本特征搜索
 				std::vector<uint8_t> hexPattern_Before_v2(hexPattern_Before2, hexPattern_Before2 + sizeof(hexPattern_Before2));
 				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2);
-				//printf("0-beforeOffect: %lx\n", beforeOffect);
-			        if (beforeOffect <= 0)
-				{
+				// printf("old-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pnpm->offset));
+				if (beforeOffect == 0)
 					break;
-				}
-				//printf("beforeOffect: %lx\n", beforeOffect);
 			}
-			//printf("1-beforeOffect: %lx\n", beforeOffect);
-			uint64_t searchOffset = beforeOffect + sizeof(hexPattern_Before) - 1 - pmap->start();
-			if ((int64_t)searchOffset <= 0)
-			{
-				break;
-			}
+			beforeOffect += sizeof(hexPattern_Before) - 1;
+			uint64_t searchOffset = beforeOffect - pmap->start();
 			while (true)
 			{
 				uint64_t address = SearchRangeAddressInModule(pmap, hexPattern_v, searchOffset);
-				//printf("address: %lx\n", address);
-				if (address <= 0)
+				if (address == 0)
 					break;
 				address += sizeof(hexPattern) - 1;
+				printf("address: %lx, RVA: %lx\n", address, address - (pmap->start() - pnpm->offset));
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-				//printf("funcptr: %p\n", funcptr);
+				printf("funcptr: %p, RVA: %lx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - (pmap->start() - pnpm->offset));
 				if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 					return std::make_pair(address, funcptr);
 
