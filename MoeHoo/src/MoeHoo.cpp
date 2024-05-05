@@ -5,21 +5,19 @@
 #include "Hook.h"
 
 // include ${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
+
 #if defined(_WIN_PLATFORM_)
 std::map<std::string, std::map<std::string, int>> addrMap = {};
 #elif defined(_LINUX_PLATFORM_)
 std::map<std::string, std::map<std::string, int>> addrMap = {
 	{"3.2.7-23361", {{"x64", 0x4C93C57}}}};
 #endif
-// PE文件静态方法
-// PE内存搜索方案
+// Rkey 拦截点函数签名
 typedef uint64_t (*FuncPtr)(uint64_t, uint64_t);
 uint64_t callptr;
 FuncPtr orifuncptr;
-
 std::mutex recvRkeyLock;
 std::string rkey = "";
-// 没有做多线程安全与回调 可能大问题
 uint64_t recvRkey(uint64_t a1, uint64_t a2)
 {
 	recvRkeyLock.lock();
@@ -33,8 +31,11 @@ uint64_t recvRkey(uint64_t a1, uint64_t a2)
 	recvRkeyLock.unlock();
 	return ret;
 }
-
-std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
+std::pair<uint64_t, FuncPtr> searchRkeyByTable(uint64_t offsets)
+{
+	return std::make_pair(0, nullptr);
+}
+std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 {
 #if defined(_LINUX_PLATFORM_)
 	auto pmap = hak::get_maps();
@@ -140,9 +141,14 @@ namespace demo
 #endif
 		if (addrMap.find(QQversion) != addrMap.end())
 		{
-			// 找到已有 直接获取offsets 计算出目标地址 
+			searchRkeyByTable(addrMap[QQversion]["x64"]);
+			// 找到已有 直接获取offsets 计算出目标地址
 		}
-		std::tie(callptr, orifuncptr) = searchRkeyDownloadHook();
+		else
+		{
+			std::tie(callptr, orifuncptr) = searchRkeyByMemory();
+		}
+
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
 			status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
