@@ -50,13 +50,13 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 			std::vector<uint8_t> expected_v(expected, expected + sizeof(expected));
 			// 需要判断
 			uint64_t beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v);
-			// printf("new-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pnpm->offset));
+			// printf("new-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pmap->offset));
 			if (beforeOffect == 0)
 			{
 				// 进行老版本特征搜索
 				std::vector<uint8_t> hexPattern_Before_v2(hexPattern_Before2, hexPattern_Before2 + sizeof(hexPattern_Before2));
 				beforeOffect = SearchRangeAddressInModule(pmap, hexPattern_Before_v2);
-				// printf("old-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pnpm->offset));
+				// printf("old-beforeOffect: %lx, RVA: %lx\n", beforeOffect, beforeOffect - (pmap->start() - pmap->offset));
 				if (beforeOffect == 0)
 					break;
 			}
@@ -68,9 +68,9 @@ std::pair<uint64_t, FuncPtr> searchRkeyDownloadHook()
 				if (address == 0)
 					break;
 				address += sizeof(hexPattern) - 1;
-				printf("address: %lx, RVA: %lx\n", address, address - (pmap->start() - pnpm->offset));
+				printf("address: %lx, RVA: %lx\n", address, address - (pmap->start() - pmap->offset));
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-				printf("funcptr: %p, RVA: %lx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - (pmap->start() - pnpm->offset));
+				printf("funcptr: %p, RVA: %lx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - (pmap->start() - pmap->offset));
 				if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 					return std::make_pair(address, funcptr);
 
