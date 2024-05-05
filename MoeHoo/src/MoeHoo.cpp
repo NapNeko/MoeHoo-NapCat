@@ -1,11 +1,16 @@
 #include <node_api.h>
 #include <mutex>
-
+#include <map>
 #include "ExecutableAnalyse.h"
 #include "Hook.h"
 
 // include ${CMAKE_SOURCE_DIR}/node_modules/node-api-headers/include
-
+#if defined(_WIN_PLATFORM_)
+std::map<std::string, std::map<std::string, int>> addrMap = {};
+#elif defined(_LINUX_PLATFORM_)
+std::map<std::string, std::map<std::string, int>> addrMap = {
+	{"3.2.7-23361", {{"x64", 0x4C93C57}}}};
+#endif
 // PE文件静态方法
 // PE内存搜索方案
 typedef uint64_t (*FuncPtr)(uint64_t, uint64_t);
@@ -128,6 +133,11 @@ namespace demo
 	{
 		napi_value greeting;
 		napi_status status;
+#if defined(_WIN_PLATFORM_)
+		std::string QQversion = "9.9.9-23361";
+#elif defined(_LINUX_PLATFORM_)
+		std::string QQversion = "3.2.7-23361";
+#endif
 		std::tie(callptr, orifuncptr) = searchRkeyDownloadHook();
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
