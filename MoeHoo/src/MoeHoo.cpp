@@ -138,6 +138,10 @@ namespace demo
 #elif defined(_LINUX_PLATFORM_)
 		std::string QQversion = "3.2.7-23361";
 #endif
+		if (addrMap.find(QQversion) != addrMap.end())
+		{
+			// 找到已有 直接获取offsets 计算出目标地址 
+		}
 		std::tie(callptr, orifuncptr) = searchRkeyDownloadHook();
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
