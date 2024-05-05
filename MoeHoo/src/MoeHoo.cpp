@@ -141,7 +141,7 @@ namespace demo
 #endif
 		if (addrMap.find(QQversion) != addrMap.end())
 		{
-			searchRkeyByTable(addrMap[QQversion]["x64"]);
+			std::tie(callptr, orifuncptr) = searchRkeyByTable(addrMap[QQversion]["x64"]);
 			// 找到已有 直接获取offsets 计算出目标地址
 		}
 		else
