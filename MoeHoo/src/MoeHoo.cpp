@@ -18,8 +18,8 @@ std::map<std::string, std::pair<uint64_t, uint64_t>> addrMap = {
 #endif
 // Rkey 拦截点函数签名
 typedef uint64_t (*FuncPtr)(uint64_t, uint64_t);
-uint64_t callptr;
-FuncPtr orifuncptr;
+uint64_t callptr = 0;
+FuncPtr orifuncptr = nullptr;
 std::mutex recvRkeyLock;
 std::string rkey = "";
 uint64_t recvRkey(uint64_t a1, uint64_t a2)
