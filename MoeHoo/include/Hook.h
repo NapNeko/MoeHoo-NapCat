@@ -148,8 +148,9 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	}
 	// 直接进行小跳转
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	if (!VirtualProtect(callAddr, 10, oldProtect, &reProtect))			 // 恢复原来的内存保护属性
+	if (!VirtualProtect(callAddr, 10, oldProtect, &reProtect))		 // 恢复原来的内存保护属性
 	{
+		std::cout << GetLastError()<<"/"<<callAddr<<"/"<<oldProtect<<"/"<<reProtect;
 		printf("VirtualProtect failed\n");
 		return false;
 	}
