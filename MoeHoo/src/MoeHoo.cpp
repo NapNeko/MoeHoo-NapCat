@@ -152,16 +152,18 @@ namespace demo
 	{
 		napi_value greeting;
 		napi_status status;
-#if defined(_WIN_PLATFORM_)
-		std::string QQversion = "9.9.9-23361";
-#elif defined(_LINUX_PLATFORM_)
-		std::string QQversion = "3.2.7-23361";
-#endif
+		size_t argc = 1;
+		napi_value argv[1] = {nullptr};
+		char *QQversion = new char[1024];
+		size_t str_size = 1024;
+		napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
+		napi_get_value_string_utf8(env, argv[0], QQversion, str_size, &str_size);
+
 		std::tie(callptr, orifuncptr) = searchRkeyByTable(QQversion);
 
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
-			printf("QQversion: %s not in table, try to search in memory\n", QQversion.c_str());
+			printf("QQversion: %s not in table, try to search in memory\n", QQversion);
 			// Linux容易崩就不去Search了
 #if defined(_WIN_PLATFORM_)
 			std::tie(callptr, orifuncptr) = searchRkeyByMemory();
@@ -170,8 +172,7 @@ namespace demo
 			if (callptr == 0 || orifuncptr == nullptr)
 			{
 				status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
-				if (status != napi_ok)
-					return nullptr;
+				delete[] QQversion;
 				return greeting;
 			}
 		}
@@ -179,13 +180,11 @@ namespace demo
 		if (!Hook(reinterpret_cast<uint8_t *>(callptr), (void *)recvRkey))
 		{
 			status = napi_create_string_utf8(env, "error hook", NAPI_AUTO_LENGTH, &greeting);
-			if (status != napi_ok)
-				return nullptr;
+			delete[] QQversion;
 			return greeting;
 		}
 		status = napi_create_string_utf8(env, std::to_string(callptr).c_str(), NAPI_AUTO_LENGTH, &greeting);
-		if (status != napi_ok)
-			return nullptr;
+		delete[] QQversion;
 		return greeting;
 	}
 	napi_value GetRkey(napi_env env, napi_callback_info args)
