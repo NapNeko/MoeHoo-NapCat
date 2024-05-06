@@ -8,11 +8,14 @@
 
 #if defined(_WIN_PLATFORM_)
 #if defined(_X64_ARCH_)
-std::map<std::string, std::pair<uint64_t, uint64_t>> addrMap = {};
+std::map<std::string, std::pair<uint64_t, uint64_t>> addrMap = {
+	{"9.9.9-23361", {0x1cd6359, 0x5c0310}}};
 #endif
 #elif defined(_LINUX_PLATFORM_)
 #if defined(_X64_ARCH_)
 std::map<std::string, std::pair<uint64_t, uint64_t>> addrMap = {
+	{"3.2.7-22868", {0x37ce44c, 0x2255d00}},
+	{"3.2.7-23159", {0x37d499c, 0x225a000}},
 	{"3.2.7-23361", {0x37E291C, 0x2262070}}};
 #endif
 #endif
@@ -93,9 +96,9 @@ std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 				if (address == 0)
 					break;
 				address += sizeof(hexPattern) - 1;
-				printf("call address: %lx, RVA: %lx\n", address, address - base);
+				printf("call address: %lx, RVA: 0x%lx\n", address, address - base);
 				FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-				printf("funcptr: %p, RVA: %lx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - base);
+				printf("funcptr: %p, RVA: 0x%lx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - base);
 				// 检查是否为目标函数
 				if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 					return std::make_pair(address, funcptr);
@@ -121,7 +124,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 
 	// 需要判断
 	uint64_t beforeOffect = SearchRangeAddressInModule(wrapperModule, hexPattern_Before_v, 0x1CB0001, 0x1CFFA80);
-	// printf("beforeOffect: %llx, RVA: %llx\n", beforeOffect, beforeOffect - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
+	// printf("beforeOffect: %llx, RVA: 0x%llx\n", beforeOffect, beforeOffect - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 	if (beforeOffect <= 0)
 		return std::make_pair(0, nullptr);
 
@@ -133,9 +136,9 @@ std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 		if (address <= 0)
 			break;
 		address += sizeof(hexPattern) - 1;
-		printf("address: %llx, RVA: %llx\n", address, address - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
+		printf("address: %llx, RVA: 0x%llx\n", address, address - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 		FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-		printf("funcptr: %p, RVA: %llx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
+		printf("funcptr: %p, RVA: 0x%llx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 		if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 			return std::make_pair(address, funcptr);
 
@@ -224,31 +227,3 @@ namespace demo
 	NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
 
 }
-
-// int def_test()
-// {
-// 	try
-// 	{
-// 		// 读取PE文件到内存
-// 		std::vector<char> PEData(ReadFileToMemory("E:\\APPD\\NTQQ\\resources\\app\\versions\\9.9.9-22961\\wrapper.node"));
-// 		std::string hexPattern = "\xE8\x62\x01\x8F\xFE";
-// 		size_t patternPos = SearchHexPattern(PEData, hexPattern);
-
-// 		std::cout << "十六进制序列的文件偏移位置: " << std::hex << patternPos << std::endl;
-
-// 		// 计算RVA
-// 		// .text 代码节的RVA为0x1000，文件偏移为0x400
-// 		size_t codeSectionRVA = 0x1000;
-// 		size_t codeSectionFOA = 0x400;
-// 		size_t rva = codeSectionRVA + (patternPos - codeSectionFOA);
-
-// 		std::cout << "十六进制序列的RVA: " << std::hex << rva << std::endl;
-// 		std::cout << "十六进制序列的Hook点:" << std::hex << rva - 0x3 << std::endl;
-// 	}
-// 	catch (const std::exception &e)
-// 	{
-// 		std::cerr << "错误: " << e.what() << std::endl;
-// 	}
-// 	system("pause");
-// 	return 0;
-// }
