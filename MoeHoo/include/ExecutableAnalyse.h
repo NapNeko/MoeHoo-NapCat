@@ -6,6 +6,8 @@
 // #define _LINUX_PLATFORM_
 // #define _WIN_PLATFORM_
 
+#define _X64_ARCH_
+
 #if defined(_WIN_PLATFORM_)
 #include <Windows.h>
 #include <psapi.h>
