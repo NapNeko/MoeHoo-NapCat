@@ -162,8 +162,11 @@ namespace demo
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
 			printf("QQversion: %s not in table, try to search in memory\n", QQversion.c_str());
+			// Linux容易崩就不去Search了
+#if defined(_WIN_PLATFORM_)
 			std::tie(callptr, orifuncptr) = searchRkeyByMemory();
-
+#elif defined(_LINUX_PLATFORM_)
+#endif
 			if (callptr == 0 || orifuncptr == nullptr)
 			{
 				status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
