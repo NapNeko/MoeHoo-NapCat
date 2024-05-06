@@ -129,6 +129,7 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	// printf("Hooking %p to %p, distance: %lld\n", callAddr, lpFunction, distance);
 
 	DWORD oldProtect;
+	DWORD reProtect;
 	if (!VirtualProtect(callAddr, 10, PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
 		printf("VirtualProtect failed\n");
@@ -147,7 +148,7 @@ bool Hook(uint8_t *callAddr, void *lpFunction)
 	}
 	// 直接进行小跳转
 	memcpy(callAddr + 1, reinterpret_cast<int32_t *>(&distance), 4); // 修改 call 地址
-	if (!VirtualProtect(callAddr, 10, oldProtect, nullptr))			 // 恢复原来的内存保护属性
+	if (!VirtualProtect(callAddr, 10, oldProtect, &reProtect))			 // 恢复原来的内存保护属性
 	{
 		printf("VirtualProtect failed\n");
 		return false;
