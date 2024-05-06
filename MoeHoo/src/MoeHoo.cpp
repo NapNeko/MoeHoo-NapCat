@@ -121,7 +121,7 @@ std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 
 	// 需要判断
 	uint64_t beforeOffect = SearchRangeAddressInModule(wrapperModule, hexPattern_Before_v, 0x1CB0001, 0x1CFFA80);
-	// printf("beforeOffect: %llx\n", beforeOffect);
+	// printf("beforeOffect: %llx, RVA: %llx\n", beforeOffect, beforeOffect - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 	if (beforeOffect <= 0)
 		return std::make_pair(0, nullptr);
 
@@ -130,12 +130,12 @@ std::pair<uint64_t, FuncPtr> searchRkeyByMemory()
 	while (true)
 	{
 		uint64_t address = SearchRangeAddressInModule(wrapperModule, hexPattern_v, searchOffset, 0x1CF0015);
-		// printf("address: %llx\n", address);
 		if (address <= 0)
 			break;
 		address += sizeof(hexPattern) - 1;
+		printf("address: %llx, RVA: %llx\n", address, address - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 		FuncPtr funcptr = reinterpret_cast<FuncPtr>(GetCallAddress(reinterpret_cast<uint8_t *>(address)));
-		// printf("funcptr: %p\n", funcptr);
+		printf("funcptr: %p, RVA: %llx\n", funcptr, reinterpret_cast<uint64_t>(funcptr) - reinterpret_cast<uint64_t>(modInfo.lpBaseOfDll));
 		if (std::equal(expected_v.begin(), expected_v.end(), reinterpret_cast<uint8_t *>(funcptr)))
 			return std::make_pair(address, funcptr);
 
@@ -164,11 +164,17 @@ namespace demo
 		if (callptr == 0 || orifuncptr == nullptr)
 		{
 			printf("QQversion: %s not in table, try to search in memory\n", QQversion);
-			// Linux容易崩就不去Search了
-#if defined(_WIN_PLATFORM_)
-			std::tie(callptr, orifuncptr) = searchRkeyByMemory();
-#elif defined(_LINUX_PLATFORM_)
-#endif
+			try
+			{
+				std::tie(callptr, orifuncptr) = searchRkeyByMemory();
+			}
+			catch (...)
+			{
+				status = napi_create_string_utf8(env, "crash when search", NAPI_AUTO_LENGTH, &greeting);
+				delete[] QQversion;
+				return greeting;
+			}
+
 			if (callptr == 0 || orifuncptr == nullptr)
 			{
 				status = napi_create_string_utf8(env, "error search", NAPI_AUTO_LENGTH, &greeting);
